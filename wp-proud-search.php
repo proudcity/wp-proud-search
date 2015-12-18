@@ -1,30 +1,28 @@
 <?php
-/** wp-proud-search.php
- *
- * Plugin Name: WP Search Suggest
- * Plugin URI:  http://en.obenland.it/wp-proud-search/#utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-proud-search
- * Description: Provides title suggestions while typing a search query, using the built in jQuery suggest script.
- * Version:     2.1.0
- * Author:      Konstantin Obenland
- * Author URI:  http://en.obenland.it/#utm_source=wordpress&utm_medium=plugin&utm_campaign=wp-proud-search
- * Text Domain: wp-proud-search
- * Domain Path: /lang
- * License:     GNU General Public License v2 or later
- * License URI: http://www.gnu.org/licenses/gpl-2.0.html
- */
+/*
+Plugin Name:        Proud Search
+Plugin URI:         http://getproudcity.com
+Description:        ProudCity distribution
+Version:            1.0.0
+Author:             ProudCity
+Author URI:         http://getproudcity.com
 
+License:            MIT License
+License URI:        http://opensource.org/licenses/MIT
+*/
 
-if ( ! class_exists( 'Proud_Wp_Plugins_v100' ) ) {
-	require_once( 'proud-wp-plugins.php' );
+// namespace Proud\Search;
+
+// Load Extendible
+// -----------------------
+if ( ! class_exists( 'ProudPlugin' ) ) {
+  require_once( plugin_dir_path(__FILE__) . '../wp-proud-core/proud-plugin.class.php' );
 }
 
+// Init rendered var for actions overlay
+$GLOBALS['proud_search_box_rendered'] = false;
 
-class Proud_Search_Suggest extends Proud_Wp_Plugins_v100 {
-
-
-	///////////////////////////////////////////////////////////////////////////
-	// METHODS, PUBLIC
-	///////////////////////////////////////////////////////////////////////////
+class Proud_Search_Suggest extends \ProudPlugin {
 
 	/**
 	 * Constructor
@@ -42,63 +40,57 @@ class Proud_Search_Suggest extends Proud_Wp_Plugins_v100 {
 			'plugin_path'    => __FILE__,
 		) );
 
+		// Load widgets
+		$this->hook( 'plugins_loaded', 'proud_search_init_widgets' );
+
+		// Endpoints
 		$this->hook( 'wp_ajax_wp-proud-search',        'ajax_response' );
 		$this->hook( 'wp_ajax_nopriv_wp-proud-search', 'ajax_response' );
 		$this->hook( 'wp_ajax_wpss-post-url',            'post_url' );
 		$this->hook( 'wp_ajax_nopriv_wpss-post-url',     'post_url' );
-		$this->hook( 'init', 9 ); // Set to 9, so they can easily be deregistered.
-		$this->hook( 'wp_enqueue_scripts' );
+		
+		// Print in overlay?
+		$this->hook( 'proud_navbar_overlay_search', 'proud_seach_print_search');
 	}
 
+  // Init on plugins loaded
+  public function proud_search_init_widgets() {
+    require_once plugin_dir_path(__FILE__) . '/lib/search-box.class.php';
 
-	/**
-	 * Registers the script and stylesheet
-	 *
-	 * The scripts and stylesheets can easily be deregeistered be calling
-	 * <code>wp_deregister_script( 'wp-proud-search' );</code> or
-	 * <code>wp_deregister_style( 'wp-proud-search' );</code> on the init
-	 * hook
-	 *
-	 * @author Konstantin Obenland
-	 * @since  1.0 - 16.04.2011
-	 * @access public
-	 *
-	 * @return void
-	 */
-	public function init() {
-		$plugin_data = get_file_data( __FILE__, array( 'Version' => 'Version' ), 'plugin' );
-		// @todo?: $suffix      = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '.dev' : '';
-		$suffix = '';
+    // Add proud search settings
+    global $proudcore;
+    $proudcore->addJsSettings([
+      'proud_search' => [
+        'global' => [
+		      'url'     => admin_url( 'admin-ajax.php' ),
+		      //'nonce'   => wp_create_nonce( 'wpss-post-url' ),
+		      'max_results' => 10,
+		      'params' => array(
+		        'action'   => 'wp-proud-search',
+		        '_wpnonce' => wp_create_nonce( 'wp-proud-search' ),
+		      ),
+		   	]
+			]
+		]);
+  }
 
-		wp_register_script( $this->textdomain . 'typewatch', plugins_url( "js/jquery.typewatch$suffix.js", __FILE__ ), array(  ), $plugin_data['Version'], true );
-		wp_register_script( $this->textdomain, plugins_url( "js/wp-proud-search$suffix.js", __FILE__ ), array( $this->textdomain . 'typewatch' ), $plugin_data['Version'], true );
-		wp_localize_script( $this->textdomain, 'proud_search_options', array(
-			'url'     => admin_url( 'admin-ajax.php' ),
-			//'nonce'   => wp_create_nonce( 'wpss-post-url' ),
-			'max_results' => 10,
-			'params' => array(
-				'action'   => $this->textdomain,
-				'_wpnonce' => wp_create_nonce( $this->textdomain ),
-			),
-		) );
-
-		wp_register_style( $this->textdomain, plugins_url( "css/wpss-search-suggest$suffix.css", __FILE__ ), array(), $plugin_data['Version'] );
-	}
-
-
-	/**
-	 * Enqueues the script and style
-	 *
-	 * @author Konstantin Obenland
-	 * @since  1.0 - 16.04.2011
-	 * @access public
-	 *
-	 * @return void
-	 */
-	public function wp_enqueue_scripts() {
-		wp_enqueue_script( $this->textdomain );
-		wp_enqueue_style(  $this->textdomain );
-	}
+  // Respond to navbar footer hook
+  // Print widget if has not been rendered elsewhere
+  public function proud_seach_print_search() {
+    global $proudcore;
+    // Add rendered variable to JS
+    $proudcore->addJsSettings([
+      'proud_search_box' => [
+        'global' => [
+          'render_in_overlay' => !$GLOBALS['proud_search_box_rendered']
+        ]
+      ]
+    ]);
+    // if not rendered on page yet, render in overlay
+    if(!$GLOBALS['proud_search_box_rendered']) {
+      the_widget('SearchBox');
+    }
+  }
 
 
 	/**
@@ -124,6 +116,10 @@ class Proud_Search_Suggest extends Proud_Wp_Plugins_v100 {
 				'icon' => 'fa-question',
 				'weight' => -7,
 			),
+			'default' => array(
+				'icon' => 'fa-page',
+				'weight' => 1
+			)
 		);
 
 		//check_ajax_referer( $this->textdomain, '_wpnonce' );
@@ -140,9 +136,10 @@ class Proud_Search_Suggest extends Proud_Wp_Plugins_v100 {
 		if ( $query->posts ) {
 			$out = array();
 			foreach ($query->posts as $post) {
+				$post_settings = !empty($meta[$post->post_type]) ? $meta[$post->post_type] : $meta['default'];
 				$out[] = array(
-					'weight' => $weights[$post->post_type]['weight'],
-					'icon' => $meta[$post->post_type]['icon'], // @todo
+					'weight' => $post_settings['weight'],
+					'icon' => $post_settings['icon'], // @todo
 					'title' => $post->post_title,
 					'url' => $post->guid,
 				);
