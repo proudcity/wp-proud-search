@@ -3,14 +3,13 @@
     attach: function(context, settings) {
 
       var proud_autocomplete = function(value, selector) {
-        selector = selector == undefined ? '#proud-search-autocomplete' : selector;
-        settings.proud_search.global.params.q = $(selector).val();
-        console.log(settings.proud_search.global);
+        selector = selector || '#proud-search-input';
+        settings.proud_search.global.params.q = value || $(selector).val();
+        var $wrapper = $('#proud-search-autocomplete');
         $.ajax({
           url: settings.proud_search.global.url,
           data: settings.proud_search.global.params,
           success: function(data) {
-            $wrapper = $(selector); //@todo: fix
             $wrapper.html('');
             if (data.length) {
               $.each(data, function( index, item ) {
