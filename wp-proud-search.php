@@ -16,13 +16,22 @@ License URI:        http://opensource.org/licenses/MIT
 // Load Extendible
 // -----------------------
 if ( ! class_exists( 'ProudPlugin' ) ) {
-  require_once( plugin_dir_path(__FILE__) . '../wp-proud-core/proud-plugin.class.php' );
+  require_once( plugin_dir_path(__FILE__) . '../wp-proud-core/search-page.class.php' );
 }
 
 // Init rendered var for actions overlay
 $GLOBALS['proud_search_box_rendered'] = false;
 
-class Proud_Search_Suggest extends \ProudPlugin {
+class ProudSearch extends \ProudPlugin {
+
+	// Search form nonce
+	const _SEARCH_NONCE = 'proud_search_form_submit_nonce';
+	// Search by
+	const _SEARCH_PARAM = 'term';
+	// Search provider?
+	const _SEARCH_PAGE_PROVIDER = 'google';
+	// Search provider object
+  public static $provider;
 
 	/**
 	 * Constructor
@@ -40,8 +49,17 @@ class Proud_Search_Suggest extends \ProudPlugin {
 			'plugin_path'    => __FILE__,
 		) );
 
+		// Load google search page ?
+		if('google' == self::_SEARCH_PAGE_PROVIDER) {
+			require_once( plugin_dir_path(__FILE__) . 'lib/google-search-page.class.php' );
+			self::$provider = new ProudGoogleSearch;
+		}
+
 		// Load widgets
-		$this->hook( 'plugins_loaded', 'proud_search_init_widgets' );
+		$this->hook( 'plugins_loaded', 'init_widgets' );
+
+		// Search submit
+		$this->hook('init', 'process_search');
 
 		// Endpoints
 		$this->hook( 'wp_ajax_wp-proud-search',        'ajax_response' );
@@ -53,8 +71,28 @@ class Proud_Search_Suggest extends \ProudPlugin {
 		$this->hook( 'proud_navbar_overlay_search', 'proud_seach_print_search');
 	}
 
+	// Process potential search input
+	public function process_search() {
+		// Do we have post?
+		if(isset($_POST['_wpnonce']) && !empty($_POST['search_' . self::_SEARCH_PARAM])) {
+			// See if input verifies
+			if(wp_verify_nonce($_POST['_wpnonce'], self::_SEARCH_NONCE)) {
+				$param = self::_SEARCH_PARAM . '=' . urlencode(sanitize_text_field($_POST['search_' . self::_SEARCH_PARAM]));
+				$get_page_info = self::get_search_page();
+  			$url = get_permalink( $get_page_info->ID );
+  			$url .= strpos($url, '?') > 0 ? '&' : '?'; 
+  			// echo ($url . $param);
+  			wp_redirect( $url . $param );
+  			exit();
+			}
+		}
+	}
+
   // Init on plugins loaded
-  public function proud_search_init_widgets() {
+  public function init_widgets() {
+  	// Check search
+  	// $this->process_search();
+  	// Load plugins
     require_once plugin_dir_path(__FILE__) . '/lib/search-box.class.php';
 
     // Add proud search settings
@@ -72,6 +110,11 @@ class Proud_Search_Suggest extends \ProudPlugin {
 		   	]
 			]
 		]);
+  }
+  
+  // Return the search page
+  static function get_search_page() {
+  	return self::$provider->get_search_page();
   }
 
   // Respond to navbar footer hook
@@ -177,7 +220,8 @@ class Proud_Search_Suggest extends \ProudPlugin {
 }  // End of class Obenland_Wp_Search_Suggest
 
 
-new Proud_Search_Suggest;
+$proudsearch = new ProudSearch;
+$GLOBALS['proudsearch'] = $proudsearch;
 
 
 /* End of file wp-proud-search.php */

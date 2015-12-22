@@ -7,10 +7,6 @@ use Proud\Core;
 
 class SearchBox extends Core\ProudWidget {
 
-  public $search_name = 'term';
-  public $action =  'search';
-  public $provider = 'google';
-
   function __construct() {
     parent::__construct(
       'proud_search_box', // Base ID
@@ -35,7 +31,7 @@ class SearchBox extends Core\ProudWidget {
     $path = plugins_url('../includes/js/',__FILE__);
     wp_enqueue_script( 'typewatch', $path . 'jquery.typewatch.js', [ 'jquery' ], false, true );
     wp_enqueue_script( 'wp-proud-search', $path . 'wp-proud-search.js', [ 'typewatch' ], false, true );
-    wp_register_style( 'wp-proud-search', $path . '../css/wpss-search-suggest.css', [] );
+    // wp_register_style( 'wp-proud-search', $path . '../css/wpss-search-suggest.css', [] );
   }
 
   /**
@@ -51,16 +47,22 @@ class SearchBox extends Core\ProudWidget {
     // We are rendering
     $GLOBALS['proud_search_box_rendered'] = true;
 
+    global $proudsearch;
+    $get_page_info = $proudsearch::get_search_page();
+    $url = get_permalink( $get_page_info->ID );
+    // Filter the search page url. Used for multi-language search forms.
+    $url = apply_filters( 'proud_filter_search_page_url', $url, $get_page_info->ID );
+
     $query = empty($_REQUEST[$this->id]) ? '' : $_REQUEST[$this->id];
 
     ?>
-    <form class="form-inline get-started search-form align-left" id="wrapper-search" style="margin-top:30px" action="<?php print $this->action; ?>">
-
+    <form method="post" class="form-inline get-started search-form align-left" id="wrapper-search" style="margin-top:30px" action="">
+      <?php wp_nonce_field($proudsearch::_SEARCH_NONCE); ?>
       <div class="input-group">
         <input 
           id="proud-search-input" class="form-control input-lg" type="text" autocomplete="off"
           placeholder="<?php print $instance['placeholder']; ?>" 
-          name="<?php print $this->name; ?>" 
+          name="<?php print 'search_' . $proudsearch::_SEARCH_PARAM; ?>" 
           value="<?php print $query; ?>"
         >
         <span class="input-group-btn">
