@@ -139,6 +139,7 @@ class ProudGoogleSearch {
     // // }
 
     ?>
+    <?php the_widget('SearchBox'); ?>
     <gcse:searchresults-only></gcse:searchresults-only>
     <?php
   }

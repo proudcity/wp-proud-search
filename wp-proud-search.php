@@ -16,7 +16,7 @@ License URI:        http://opensource.org/licenses/MIT
 // Load Extendible
 // -----------------------
 if ( ! class_exists( 'ProudPlugin' ) ) {
-  require_once( plugin_dir_path(__FILE__) . '../wp-proud-core/search-page.class.php' );
+  require_once( plugin_dir_path(__FILE__) . '../wp-proud-core/proud-plugin.class.php' );
 }
 
 // Init rendered var for actions overlay
