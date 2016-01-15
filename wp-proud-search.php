@@ -152,7 +152,7 @@ class ProudSearch extends \ProudPlugin {
 				'weight' => -8,
 			),
 			'payment' => array(
-				'icon' => 'fa-card',
+				'icon' => 'fa-credit-card',
 				'weight' => -9,
 			),
 			'question' => array(
