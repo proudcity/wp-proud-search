@@ -32,7 +32,7 @@
                           }
                           if(item.type == 'payment') {
                             data = 'payments';
-                            hash = '/' + item.nid; 
+                            hash = '/' + item.slug; 
                           }
                           if(data) {
                             Proud.proudNav.triggerOverlay(data, hash);

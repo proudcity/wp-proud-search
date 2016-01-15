@@ -171,15 +171,14 @@ class ProudSearch extends \ProudPlugin {
 
 		$query_args = apply_filters( 'wpss_search_query_args', array(
 			's'           => $s,
-			'post_status' => 'publish',
-      'tax_query' => array()
+			'post_status' => 'publish'
 		), $s );
 
 		$query = new WP_Query( $query_args );
 
 		if ( $query->posts ) {
 			$out = array();
-      // print_r();
+      // Run through results
 			foreach ($query->posts as $post) {
         $post_type = $post->post_type;
         // Try to get tax
@@ -188,7 +187,6 @@ class ProudSearch extends \ProudPlugin {
           $terms = get_object_term_cache( $post->ID, 'faq-topic' );
           // Guess not
           if( empty( $terms ) ) {
-              $post->fuck = 'me';
               $terms = wp_get_object_terms( $post->ID, 'faq-topic' );
               wp_cache_add( $post->ID, $terms, 'faq-topic' . '_relationships' );
           }
