@@ -151,6 +151,14 @@ class ProudSearch extends \ProudPlugin {
 				'icon' => 'fa-university',
 				'weight' => -8,
 			),
+      'event' => array(
+        'icon' => 'fa-calendar-o',
+        'weight' => -3,
+      ),
+      'post' => array(
+        'icon' => ' fa-newspaper-o',
+        'weight' => 2,
+      ),
 			'payment' => array(
 				'icon' => 'fa-credit-card',
 				'weight' => -9,
@@ -160,7 +168,7 @@ class ProudSearch extends \ProudPlugin {
 				'weight' => -7,
 			),
 			'default' => array(
-				'icon' => 'fa-page',
+				'icon' => 'fa-file-o',
 				'weight' => 1
 			)
 		);
