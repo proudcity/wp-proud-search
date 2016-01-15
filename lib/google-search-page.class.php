@@ -19,8 +19,8 @@ class ProudGoogleSearch {
     // Create default page template for search results
     add_shortcode( 'proud_search_shortcode', [ $this, 'google_search_content' ] );
     // Load scripts
-    add_action('wp_enqueue_scripts', [$this, 'registerScripts']);
-    add_action('wp_footer', [$this, 'printScripts']);
+    add_action( 'wp_enqueue_scripts', [$this, 'registerScripts'] );
+    add_action( 'wp_footer', [$this, 'printScripts'] );
   }
 
   public function portfolio_page_template( $template ) {

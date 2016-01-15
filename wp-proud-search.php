@@ -172,19 +172,41 @@ class ProudSearch extends \ProudPlugin {
 		$query_args = apply_filters( 'wpss_search_query_args', array(
 			's'           => $s,
 			'post_status' => 'publish',
+      'tax_query' => array()
 		), $s );
 
 		$query = new WP_Query( $query_args );
 
 		if ( $query->posts ) {
 			$out = array();
+      // print_r();
 			foreach ($query->posts as $post) {
-				$post_settings = !empty($meta[$post->post_type]) ? $meta[$post->post_type] : $meta['default'];
+        $post_type = $post->post_type;
+        // Try to get tax
+        if( $post_type == 'question' ) {
+          // Term cache should already be primed by 'update_post_term_cache'.
+          $terms = get_object_term_cache( $post->ID, 'faq-topic' );
+          // Guess not
+          if( empty( $terms ) ) {
+              $post->fuck = 'me';
+              $terms = wp_get_object_terms( $post->ID, 'faq-topic' );
+              wp_cache_add( $post->ID, $terms, 'faq-topic' . '_relationships' );
+          }
+          // We got some hits
+          if( !empty( $terms[0]->slug ) ) {
+            $post->term = $terms[0]->slug;
+          }
+        }
+      
+				$post_settings = !empty($meta[$post_type]) ? $meta[$post_type] : $meta['default'];
 				$out[] = array(
 					'weight' => $post_settings['weight'],
 					'icon' => $post_settings['icon'], // @todo
 					'title' => $post->post_title,
 					'url' => $post->guid,
+          'type' => $post_type,
+          'term' => !empty( $post->term ) ? $post->term : '',
+          'slug' => $post->post_name
 				);
 			}
 			//print_r($query->posts);

@@ -15,33 +15,39 @@
               $.each(data, function( index, item ) {
                 if (index < settings.proud_search.global.max_results) {
                   var $item = $('<li>');
-                  $('<a>').html('<i class="fa '+ item.icon +'"></i> ' + item.title).attr('href', item.url).bind('click', function(e) {
-                    switch (item.type) {
-                      case 'faq':
-                      case 'payment':
-                      case 'report':
-                        var data, hash;
-                        if(item.type == 'faq') {
-                          data = 'answers';
-                          hash = '/' + item['field_faq_category'][0]['id'] + '/' + item.nid; 
-                        }
-                        if(item.type == 'payment') {
-                          data = 'payments';
-                          hash = '/' + item.nid; 
-                        }
-                        if(data) {
-                          Proud.proudNav.triggerOverlay(data, hash);
-                        }
-                        e.preventDefault();
-                        break;
+                  $('<a>').html('<i class="fa '+ item.icon +'"></i> ' + item.title)
+                    .attr('href', item.url)
+                    .attr('data-post-type', item.type)
+                    .attr('data-post-term', item.term)
+                    .attr('data-post-slug', item.slug)
+                    .bind('click', function(e) {
+                      switch (item.type) {
+                        case 'payment':
+                        case 'report':
+                        case 'question':
+                          var data, hash;
+                          if(item.type == 'question') {
+                            data = 'answers';
+                            hash = '/' + item.term + '/' + item.slug;
+                          }
+                          if(item.type == 'payment') {
+                            data = 'payments';
+                            hash = '/' + item.nid; 
+                          }
+                          if(data) {
+                            Proud.proudNav.triggerOverlay(data, hash);
+                          }
+                          e.preventDefault();
+                          return false;
 
-                      default:
-                        if(item.url) {
-                          window.location = item.url;
-                        }
-                        break;
+                        default:
+                          if(item.url) {
+                            window.location = item.url;
+                          }
+                          break;
+                      }
                     }
-                  }).prependTo($item);
+                  ).prependTo($item);
                 }
                 if($item) {
                   $item.appendTo($wrapper);
@@ -66,7 +72,10 @@
 
       var $body = $('body');
 
-      $("#proud-search-input").typeWatch( options );
+      // Type watch
+      $("#proud-search-input").once('proud-search-ahead', function() {
+        $(this).typeWatch( options );
+      });
 
       // Search box in content (not overlay)
       // Attach overlay open
