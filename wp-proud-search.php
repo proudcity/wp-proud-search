@@ -198,9 +198,10 @@ class ProudSearch extends \ProudPlugin {
               $terms = wp_get_object_terms( $post->ID, 'faq-topic' );
               wp_cache_add( $post->ID, $terms, 'faq-topic' . '_relationships' );
           }
+          // print_r($terms);
           // We got some hits
-          if( !empty( $terms[0]->slug ) ) {
-            $post->term = $terms[0]->slug;
+          if( !empty( $terms ) && $term_count = count($terms) ) {
+            $post->term = $terms[$term_count - 1]->slug;
           }
         }
       
