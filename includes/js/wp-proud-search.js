@@ -56,7 +56,7 @@
               });
             }
             else {
-              $('<span>').html('Click <i class="fa fa-search fa-fw"></i> to search our site with Google').appendTo($wrapper);
+              $('<span>').html('Click <i class="fa fa-search fa-fw"></i> to search our site').appendTo($wrapper);
             }
           }
         });
@@ -91,13 +91,14 @@
         switch(event['event']) {
           case 'search':
             var $searchForm = $('#wrapper-search');
-            if(!settings.proud_search_box.render_in_overlay) {
+            if(!settings.proud_search_box.global.render_in_overlay) {
               var offset = window.matchMedia('(max-width: 481px)').matches
                          ? 0
                          : 100;
               event.callback(true, 'wrapper-search', offset);
             }
             else {
+              $('#proud-search-input').focus();
               event.callback(true);
             }
             break;
