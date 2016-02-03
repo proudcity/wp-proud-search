@@ -29,7 +29,7 @@ class ProudSearch extends \ProudPlugin {
 	// Search by
 	const _SEARCH_PARAM = 'term';
 	// Search provider?
-	const _SEARCH_PAGE_PROVIDER = 'google';
+	public static $search_type = 'wordpress';
 	// Search provider object
   public static $provider;
 
@@ -48,12 +48,19 @@ class ProudSearch extends \ProudPlugin {
 			'textdomain'     => 'wp-proud-search',
 			'plugin_path'    => __FILE__,
 		) );
-
-		// Load google search page ?
-		if('google' == self::_SEARCH_PAGE_PROVIDER) {
+    // init search type with settings
+    self::$search_type = get_option( 'search_service', self::$search_type );
+    // Load parent
+    require_once( plugin_dir_path(__FILE__) . 'lib/search-page.class.php' );
+		// Load search style
+		if( 'google' == self::$search_type ) {
 			require_once( plugin_dir_path(__FILE__) . 'lib/google-search-page.class.php' );
 			self::$provider = new ProudGoogleSearch;
 		}
+    else {
+      require_once( plugin_dir_path(__FILE__) . 'lib/wordpress-search-page.class.php' );
+      self::$provider = new ProudWordpressSearch;
+    }
 
 		// Load widgets
 		$this->hook( 'plugins_loaded', 'init_widgets' );
@@ -135,6 +142,69 @@ class ProudSearch extends \ProudPlugin {
     }
   }
 
+  /**
+   * Returns formatting info for a post type
+   */
+  public function post_meta( $post_type ) {
+    switch( $post_type ) {
+      case 'agencies':
+        return array(
+          'icon' => 'fa-university',
+          'weight' => -8,
+        );
+      case 'event':
+        return array(
+          'icon' => 'fa-calendar-o',
+          'weight' => -3,
+        );
+      case 'post':
+        return array(
+          'icon' => ' fa-newspaper-o',
+          'weight' => 2,
+        );
+      case 'payment':
+        return array(
+          'icon' => 'fa-credit-card',
+          'weight' => -9,
+        );
+      case 'question':
+        return array(
+          'icon' => 'fa-question',
+          'weight' => -7,
+        );
+      default:
+        return array(
+          'icon' => 'fa-file-o',
+          'weight' => 1
+        );
+    }
+  }
+
+  /**
+   * Returns formatted title link for search result
+   */
+  public function get_post_link($post, $title = false) {
+    if(!$title) {
+      $title = $post->post_title;
+    }
+    // Try to attach actions meta
+    \Proud\ActionsApp\attach_actions_meta($post);
+    $data_attr = '';
+    // Add actions open?
+    if( !empty( $post->action_attr ) ) {
+      $data_attr = ' data-proud-navbar="' . $post->action_attr . '"';
+    }
+    // Add actions hash?
+    if( !empty( $post->action_hash ) ) {
+      $data_attr .= ' data-proud-navbar-hash="' . $post->action_hash . '"';
+    }
+    return sprintf( '<a href="%s"%s rel="bookmark">%s</a>', 
+      esc_url( get_permalink() ), 
+      $data_attr,
+      $title
+    );
+  }
+
 
 	/**
 	 * Handles the AJAX request for the search term.
@@ -146,32 +216,7 @@ class ProudSearch extends \ProudPlugin {
 	 * @return void
 	 */
 	public function ajax_response() {
-		$meta = array(
-			'agencies' => array(
-				'icon' => 'fa-university',
-				'weight' => -8,
-			),
-      'event' => array(
-        'icon' => 'fa-calendar-o',
-        'weight' => -3,
-      ),
-      'post' => array(
-        'icon' => ' fa-newspaper-o',
-        'weight' => 2,
-      ),
-			'payment' => array(
-				'icon' => 'fa-credit-card',
-				'weight' => -9,
-			),
-			'question' => array(
-				'icon' => 'fa-question',
-				'weight' => -7,
-			),
-			'default' => array(
-				'icon' => 'fa-file-o',
-				'weight' => 1
-			)
-		);
+		
 
 		//check_ajax_referer( $this->textdomain, '_wpnonce' );
 
@@ -188,37 +233,19 @@ class ProudSearch extends \ProudPlugin {
 			$out = array();
       // Run through results
 			foreach ($query->posts as $post) {
+        \Proud\ActionsApp\attach_actions_meta($post);
         $post_type = $post->post_type;
-        // Try to get tax
-        if( $post_type == 'question' ) {
-          // Term cache should already be primed by 'update_post_term_cache'.
-          $terms = get_object_term_cache( $post->ID, 'faq-topic' );
-          // Guess not
-          if( empty( $terms ) ) {
-              $terms = wp_get_object_terms( $post->ID, 'faq-topic' );
-              wp_cache_add( $post->ID, $terms, 'faq-topic' . '_relationships' );
-          }
-          // print_r($terms);
-          // We got some hits
-          if( !empty( $terms ) && $term_count = count($terms) ) {
-            $post->term = $terms[$term_count - 1]->slug;
-          }
-        }
-      
-				$post_settings = !empty($meta[$post_type]) ? $meta[$post_type] : $meta['default'];
+				$post_settings = $this->post_meta( $post_type );
 				$out[] = array(
-					'weight' => $post_settings['weight'],
-					'icon' => $post_settings['icon'], // @todo
-					'title' => $post->post_title,
-					'url' => $post->guid,
-          'type' => $post_type,
-          'term' => !empty( $post->term ) ? $post->term : '',
-          'slug' => $post->post_name
-				);
+					'weight'      => $post_settings['weight'],
+					'icon'        => $post_settings['icon'], // @todo
+					'title'       => $post->post_title,
+          'type'        => $post_type,
+          'action_attr' => !empty( $post->action_attr ) ? $post->action_attr : '',
+          'action_hash' => !empty( $post->action_hash ) ? $post->action_hash : '',
+          'url'         => $post->guid,
+        );
 			}
-			//print_r($query->posts);
-			//$results = apply_filters( 'wpss_search_results', wp_list_pluck( $query->posts, 'post_type' ), $query );
-
 			wp_send_json($out);
 		}
 

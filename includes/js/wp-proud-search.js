@@ -17,25 +17,19 @@
                   var $item = $('<li>');
                   $('<a>').html('<i class="fa '+ item.icon +'"></i> ' + item.title)
                     .attr('href', item.url)
-                    .attr('data-post-type', item.type)
-                    .attr('data-post-term', item.term)
-                    .attr('data-post-slug', item.slug)
                     .bind('click', function(e) {
                       switch (item.type) {
                         case 'payment':
                         case 'report':
                         case 'question':
-                          var data, hash;
-                          if(item.type == 'question') {
-                            data = 'answers';
-                            hash = '/' + item.term + '/' + item.slug;
+                          if(item.action_attr && item.action_hash) {
+                            Proud.proudNav.triggerOverlay(item.action_attr, item.action_hash);
                           }
-                          if(item.type == 'payment') {
-                            data = 'payments';
-                            hash = '/' + item.slug; 
+                          else if(item.action_attr) {
+                            Proud.proudNav.triggerOverlay(item.action_attr);
                           }
-                          if(data) {
-                            Proud.proudNav.triggerOverlay(data, hash);
+                          else {
+                            Proud.proudNav.triggerOverlay(item.type);
                           }
                           e.preventDefault();
                           return false;
@@ -70,7 +64,8 @@
         captureLength: 2
       }
 
-      var $body = $('body');
+      var $body = $('body'),
+          searchPage = $body.hasClass('search-site'); // on search page?
 
       // Type watch
       $("#proud-search-input").once('proud-search-ahead', function() {
@@ -80,9 +75,11 @@
       // Search box in content (not overlay)
       // Attach overlay open
       $(".wrap #proud-search-input").once('proud-search', function() {
+        // if search page, override class
+        var classOverride = searchPage ? 'search-active-lite' : null;
         $(this).on('focus', function() {
           if(!$body.hasClass('search-active')) {
-            Proud.proudNav.triggerOverlay('search');
+            Proud.proudNav.triggerOverlay('search', null, classOverride);
           }
         });
       });
@@ -91,14 +88,19 @@
         switch(event['event']) {
           case 'search':
             var $searchForm = $('#wrapper-search');
-            if(!settings.proud_search_box.global.render_in_overlay) {
+            // Should we scroll the window?
+            if(!searchPage && !settings.proud_search_box.global.render_in_overlay) {
+              // Mobile vs other offset
               var offset = window.matchMedia('(max-width: 481px)').matches
                          ? 0
                          : 100;
               event.callback(true, 'wrapper-search', offset);
             }
             else {
-              $('#proud-search-input').focus();
+              // Focus if we're not on search page
+              if(!searchPage) {
+                $('#proud-search-input').focus();
+              }
               event.callback(true);
             }
             break;
