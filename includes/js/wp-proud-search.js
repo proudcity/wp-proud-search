@@ -78,11 +78,17 @@
         // if search page, override class
         var classOverride = searchPage ? 'search-active-lite' : null;
         $(this).on('focus', function() {
-          if(!$body.hasClass('search-active')) {
+          if(!$body.hasClass('search-active') && !$body.hasClass('search-active-lite')) {
             Proud.proudNav.triggerOverlay('search', null, classOverride);
           }
         });
       });
+
+      function focusSearchInput() {
+        if($body.hasClass('search-active') || $body.hasClass('search-active-lite')) {
+          $('#proud-search-input').focus();
+        }
+      }
 
       $body.on('proudNavClick', function(event) {
         switch(event['event']) {
@@ -94,14 +100,14 @@
               var offset = window.matchMedia('(max-width: 481px)').matches
                          ? 0
                          : 100;
-              event.callback(true, 'wrapper-search', offset);
+              event.callback(true, 'wrapper-search', offset, false, function() {
+                focusSearchInput();
+              } );
             }
             else {
-              // Focus if we're not on search page
-              if(!searchPage) {
-                $('#proud-search-input').focus();
-              }
-              event.callback(true);
+              event.callback(true, false, false, false, function() {
+                focusSearchInput();
+              } );
             }
             break;
         }
