@@ -1,11 +1,13 @@
 === WP Search Suggest ===
-Contributors: jeffreylyon
+Contributors: jeffreylyon, alexschmoe
 Tags: search, AJAX, jQuery
 Requires at least: 4.0
 Tested up to: 4.0
 Stable tag: 1.0
 
-Provides title suggestions while typing a search query.
+Provides title suggestions while typing a search query. [ProudCity](http://proudcity.com) is a Wordpress platform for modern, standards-compliant municipal websites.
+
+All bug reports, feature requests and other issues should be added to the [wp-proudcity Issue Queue](https://github.com/proudcity/wp-proudcity/issues).
 
 == Description ==
 
