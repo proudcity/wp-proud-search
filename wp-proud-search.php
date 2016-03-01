@@ -167,6 +167,11 @@ class ProudSearch extends \ProudPlugin {
           'icon' => 'fa-credit-card',
           'weight' => -9,
         );
+      case 'document':
+        return array(
+          'icon' => 'fa-file-text-o',
+          'weight' => -3,
+        );
       case 'question':
         return array(
           'icon' => 'fa-question',
