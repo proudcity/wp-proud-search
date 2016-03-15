@@ -20,7 +20,7 @@ class SearchBox extends Core\ProudWidget {
       'placeholder' => [
         '#title' => 'Placeholder text',
         '#type' => 'text',
-        '#default_value' => 'How may we help you?',
+        '#default_value' => 'How can we help you?',
         '#description' => 'What should the search box display',
         '#to_js_settings' => false
       ]
