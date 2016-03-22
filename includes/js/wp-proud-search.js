@@ -28,10 +28,19 @@ var decodeEntities = (function() {
         selector = selector || '#proud-search-input';
         settings.proud_search.global.params.q = value || $(selector).val();
         var $wrapper = $('#proud-search-autocomplete');
+        var location = window.location.split('#');
+        location = location[0] != undefined ? location[0] : location;
         $.ajax({
           url: settings.proud_search.global.url,
           data: settings.proud_search.global.params,
           success: function(data) {
+            ga('send', {
+              hitType: 'event',
+              eventCategory: 'SearchAutocomplete',
+              eventLabel: settings.proud_search.global.params.q,
+              eventAction: location,
+              eventValue: 1
+            });
             $wrapper.html('');
             if (data.length) {
               $.each(data, function( index, item ) {
@@ -42,6 +51,14 @@ var decodeEntities = (function() {
                   $('<a>').html('<i class="fa '+ item.icon +'"></i> ' + item.title)
                     .attr('href', item.url)
                     .bind('click', function(e) {
+                      ga('send', {
+                        hitType: 'event',
+                        eventCategory: 'SearchClick',
+                        eventLabel: item.title,
+                        eventAction: settings.proud_search.global.params.q,
+                        eventValue: 1
+                      });
+                      ga('send', 'pageview', '/search-site/?term=' + settings.proud_search.global.params.q);
                       switch (item.type) {
                         case 'payment':
                         case 'report':
