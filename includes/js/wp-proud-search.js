@@ -136,31 +136,33 @@ var decodeEntities = (function() {
           case 'search':
             var $searchForm = $('#wrapper-search');
             // Should we scroll the window?
-            if(!searchPage && !settings.proud_search_box.global.render_in_overlay) {
-              // Mobile vs other offset
-              var offset; 
-              // $md-and-down from proud-patterns: mixins/media-queries
-              if( window.matchMedia('(max-width: 991px)').matches ) {
-                offset = 0;
-              }
-              // are we large, and scrolled? 
-              // $mq-nav-fixed-top from proud-patterns: mixins/media-queries.scss
-              // also see  $nav-big-padding from proud-patterns: navbar.scss
-              else if( window.matchMedia('(min-width: 1201px)').matches && !$body.hasClass('scrolled') ) {
-                offset = 100 + (20 * 2) - 2;
-              }
-              else {
-                offset = 100;
-              }
-              event.callback(true, 'wrapper-search', offset, false, function() {
-                focusSearchInput();
-              } );
-            }
-            else {
-              event.callback(true, false, false, false, function() {
-                focusSearchInput();
-              } );
-            }
+            // if(!searchPage && !settings.proud_search_box.global.render_in_overlay) {
+            //   // Mobile vs other offset
+            //   var offset, scrollId = 'wrapper-search';
+            //   // $md-and-down from proud-patterns: mixins/media-queries
+            //   if( window.matchMedia('(max-width: 991px)').matches ) {
+            //     offset = 0;
+            //     scrollId = false;
+            //   }
+            //   // are we large, and scrolled? 
+            //   // $mq-nav-fixed-top from proud-patterns: mixins/media-queries.scss
+            //   // also see  $nav-big-padding from proud-patterns: navbar.scss
+            //   else if( window.matchMedia('(min-width: 1201px)').matches && !$body.hasClass('scrolled') ) {
+            //     offset = 100 + (20 * 2) - 2;
+            //   }
+            //   else {
+            //     offset = 100;
+            //   }
+            //   event.callback(true, scrollId, offset, false, function() {
+            //     focusSearchInput();
+            //   } );
+            // }
+            // else {
+              
+            // }
+            event.callback(true, false, false, false, function() {
+              focusSearchInput();
+            } );
             break;
         }
       });
