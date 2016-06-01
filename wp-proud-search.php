@@ -75,7 +75,34 @@ class ProudSearch extends \ProudPlugin {
 		
 		// Print in overlay?
 		$this->hook( 'proud_navbar_overlay_search', 'proud_seach_print_search');
-	}
+
+    // Filter unwanted searches
+    add_filter( 'pre_get_posts', array( $this, 'limit_post_types' ) );
+
+  }
+
+  // Limit search results on search
+  public function limit_post_types($query) {
+    if ($query->is_search && !is_admin() ) {
+      $query->set( 'post_type',  $this->search_whitelist() );
+    }
+  }
+
+  // Returns list of post types to be searched on
+  public function search_whitelist() {
+    // Build list of post types to ignore
+    $to_filter = apply_filters( 'proud_search_exclude', [
+      'attachment',
+      'revision',
+      'nav_menu_item',
+      'event-recurring',
+      'redirect_rule'
+    ] );
+    // Filter out from total
+    global $wp_post_types;
+    $to_be_filtered = array_keys( $wp_post_types );
+    return array_diff( $to_be_filtered, $to_filter );
+  }
 
 	// Process potential search input
 	public function process_search() {
@@ -117,6 +144,8 @@ class ProudSearch extends \ProudPlugin {
 			]
 		]);
   }
+
+
   
   // Return the search page
   static function get_search_page() {
@@ -228,6 +257,7 @@ class ProudSearch extends \ProudPlugin {
 
 		$query_args = apply_filters( 'wpss_search_query_args', array(
 			's'           => $s,
+      'post_type'   => $this->search_whitelist(),
 			'post_status' => 'publish'
 		), $s );
 
