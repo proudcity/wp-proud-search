@@ -83,7 +83,8 @@ class ProudSearch extends \ProudPlugin {
 
   // Limit search results on search
   public function limit_post_types($query) {
-    if ($query->is_search && !is_admin() ) {
+    if ( !empty ( $query->query['proud_search'] ) && !is_admin() ) {
+      d('yolo');
       $query->set( 'post_type',  $this->search_whitelist() );
     }
   }
