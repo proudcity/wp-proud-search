@@ -195,6 +195,11 @@ class ProudSearch extends \ProudPlugin {
           'icon' => 'fa-credit-card',
           'weight' => -9,
         );
+      case 'issue':
+        return array(
+          'icon' => 'fa-exclamation-triangle',
+          'weight' => -5,
+        );
       case 'document':
         return array(
           'icon' => 'fa-file-text-o',
@@ -213,10 +218,27 @@ class ProudSearch extends \ProudPlugin {
     }
   }
 
+  /** 
+   * Build search post url
+   */
+  public function get_post_url ( $post ) { 
+    // Build URL 
+    if( $post->type === 'agency' ) {
+      $url = ⁠⁠⁠⁠Agency\get_agency_permalink( $post );
+    }
+    else if( !empty( $post->action_url ) ) {
+      $url = $post->action_url;
+    }
+    else {
+      $url = esc_url( get_permalink( $post ) );
+    }
+    return $url;
+  }
+
   /**
    * Returns formatted title link for search result
    */
-  public function get_post_link($post, $title = false) {
+  public function get_post_link( $post, $title = false ) {
     if(!$title) {
       $title = $post->post_title;
     }
@@ -224,15 +246,16 @@ class ProudSearch extends \ProudPlugin {
     \Proud\ActionsApp\attach_actions_meta($post);
     $data_attr = '';
     // Add actions open?
-    if( !empty( $post->action_attr ) ) {
+    if( empty( $post->action_url ) && !empty( $post->action_attr ) ) {
       $data_attr = ' data-proud-navbar="' . $post->action_attr . '"';
     }
     // Add actions hash?
     if( !empty( $post->action_hash ) ) {
       $data_attr .= ' data-proud-navbar-hash="' . $post->action_hash . '"';
     }
+    
     return sprintf( '<a href="%s"%s rel="bookmark">%s</a>', 
-      esc_url( get_permalink() ), 
+      $this->get_post_url( $post ),
       $data_attr,
       $title
     );
@@ -277,7 +300,8 @@ class ProudSearch extends \ProudPlugin {
           'type'        => $post_type,
           'action_attr' => !empty( $post->action_attr ) ? $post->action_attr : '',
           'action_hash' => !empty( $post->action_hash ) ? $post->action_hash : '',
-          'url'         => $post->guid,
+          'action_url'  => !empty( $post->action_url ) ? $post->action_url : '', // currently only used for linked out
+          'url'         => $this->get_post_url( $post ),
         );
 			}
 			wp_send_json($out);

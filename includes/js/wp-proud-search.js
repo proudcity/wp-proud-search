@@ -61,7 +61,7 @@ var decodeEntities = (function() {
                       ga('send', 'pageview', '/search-site/?term=' + settings.proud_search.global.params.q);
                       switch (item.type) {
                         case 'payment':
-                        case 'report':
+                        case 'issue':
                         case 'question':
                           if(item.action_attr && item.action_hash) {
                             Proud.proudNav.triggerOverlay(item.action_attr, item.action_hash);
