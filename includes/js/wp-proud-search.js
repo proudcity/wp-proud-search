@@ -21,8 +21,20 @@ var decodeEntities = (function() {
 })();
 
 (function($, Proud) {
+
   Proud.behaviors.proud_search = {
     attach: function(context, settings) {
+
+      // Goes to link or opens external
+      var searchLinkClick = function (url) {
+        if (settings.global.external_link_window) {
+          if( !settings.global.external_regex.test(url) ) {
+            window.open(url, '_blank');
+            return false;
+          }
+        }
+        return window.location = url;
+      }
 
       var proud_autocomplete = function(value, selector) {
         selector = selector || '#proud-search-input';
@@ -60,15 +72,23 @@ var decodeEntities = (function() {
                       });
                       ga('send', 'pageview', '/search-site/?term=' + settings.proud_search.global.params.q);
                       switch (item.type) {
+                        // Action app content
                         case 'payment':
                         case 'issue':
                         case 'question':
-                          if(item.action_attr && item.action_hash) {
+                          // Just URL, so go to link
+                          if(item.action_url) {
+                            return searchLinkClick(item.action_url);;
+                          }
+                          // App + hash
+                          else if(item.action_attr && item.action_hash) {
                             Proud.proudNav.triggerOverlay(item.action_attr, item.action_hash);
                           }
+                          // App
                           else if(item.action_attr) {
                             Proud.proudNav.triggerOverlay(item.action_attr);
                           }
+                          // Try item
                           else {
                             Proud.proudNav.triggerOverlay(item.type);
                           }
@@ -77,7 +97,7 @@ var decodeEntities = (function() {
 
                         default:
                           if(item.url) {
-                            window.location = item.url;
+                            return searchLinkClick(item.url);
                           }
                           break;
                       }
