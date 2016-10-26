@@ -72,6 +72,9 @@ class ProudSearch extends \ProudPlugin {
 		$this->hook( 'wp_ajax_nopriv_wp-proud-search', 'ajax_response' );
 		$this->hook( 'wp_ajax_wpss-post-url',            'post_url' );
 		$this->hook( 'wp_ajax_nopriv_wpss-post-url',     'post_url' );
+
+    // ReST Integration
+    $this->rest_router();
 		
 		// Print in overlay?
 		$this->hook( 'proud_navbar_overlay_search', 'proud_seach_print_search');
@@ -271,12 +274,12 @@ class ProudSearch extends \ProudPlugin {
 	 *
 	 * @return void
 	 */
-	public function ajax_response() {
+	public function ajax_response( $s, $return = 'json' ) {
 		
 
 		//check_ajax_referer( $this->textdomain, '_wpnonce' );
 
-		$s = trim( stripslashes( $_GET['q'] ) );
+		$s = !empty($s) ? $s : trim( stripslashes( $_GET['q'] ) );
 
 		$query_args = apply_filters( 'wpss_search_query_args', array(
 			's'           => $s,
@@ -304,10 +307,15 @@ class ProudSearch extends \ProudPlugin {
           'url'         => $this->get_post_url( $post ),
         );
 			}
-			wp_send_json($out);
+			if ($return === 'json'){
+        wp_send_json($out);
+        wp_die();
+      } else {
+        return $out;
+      }
 		}
 
-		wp_die();
+		
 	}
 
 	/**
@@ -331,6 +339,30 @@ class ProudSearch extends \ProudPlugin {
 
 		wp_die();
 	}
+
+  public function rest_router() {
+    add_action( 'rest_api_init', function () {
+
+      register_rest_route( 'wp/v2', '/search', array(
+        'methods' => 'GET',
+        'callback' => [$this, 'rest_get_search'],
+        'args'            => array(
+          'term' => array(
+            'default' => '',
+          )
+   
+        ),
+        'permission_callback' => function () {
+          return true;//current_user_can( 'activate_plugins' );
+        }
+      ) );
+      
+    } );
+  }
+  
+  public function rest_get_search( $request ) {
+    return $this->ajax_response( $request->get_param( 'term' ), 'return' );
+  }
 }  // End of class Obenland_Wp_Search_Suggest
 
 
