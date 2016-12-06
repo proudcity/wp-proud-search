@@ -151,10 +151,19 @@ var decodeEntities = (function() {
         }
       }
 
+      $('#overlay-search-close').bind('click', function() {
+        $('#overlay-search .container').appendTo('.widget-proud-actions-app');
+        window.location.hash = window.oldHash;
+      })
+
       $body.on('proudNavClick', function(event) {
         switch(event['event']) {
           case 'search':
             var $searchForm = $('#wrapper-search');
+            window.oldHash = window.location.hash;
+
+            $('#proud_actions_app-1').appendTo('#overlay-search .container');
+            window.location.hash = 'city/search';
             // Should we scroll the window?
             // if(!searchPage && !settings.proud_search_box.global.render_in_overlay) {
             //   // Mobile vs other offset
