@@ -61,7 +61,7 @@ var decodeEntities = (function() {
                   // Escape html... WP adding escaping the & on the JSON output
                   item.url = decodeEntities(item.url);
                   $('<a>').html('<i class="fa '+ item.icon +'"></i> ' + item.title)
-                    .attr('href', item.url)
+                    .attr({'href': item.url, 'class': 'result-link'})
                     .bind('click', function(e) {
                       ga('send', {
                         hitType: 'event',
@@ -102,7 +102,7 @@ var decodeEntities = (function() {
                           break;
                       }
                     }
-                  ).prependTo($item);
+                  ).prependTo($item).after(item.suffix ? item.suffix : '');
                 }
                 if($item) {
                   $item.appendTo($wrapper);
