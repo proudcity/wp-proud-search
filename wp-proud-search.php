@@ -77,19 +77,18 @@ class ProudSearch extends \ProudPlugin {
     $this->rest_router();
 		
 		// Print in overlay?
-		$this->hook( 'proud_navbar_overlay_search', 'proud_seach_print_search');
+		$this->hook( 'proud_navbar_overlay_search', 'proud_seach_print_search' );
 
     // Filter unwanted searches
-    add_filter( 'pre_get_posts', array( $this, 'limit_post_types' ) );
-
+    // add_filter( 'pre_get_posts', array( $this, 'limit_post_types' ) );
   }
 
-  // Limit search results on search
-  public function limit_post_types($query) {
-    if ( !empty ( $query->query['proud_search'] ) && !is_admin() ) {
-      $query->set( 'post_type',  $this->search_whitelist() );
-    }
-  }
+  // // Limit search results on search
+  // public function limit_post_types($query) {
+  //   if ( !empty ( $query->query['proud_search'] ) && !is_admin() ) {
+  //     $query->set( 'post_type',  $this->search_whitelist() );
+  //   }
+  // }
 
   // Returns list of post types to be searched on
   public function search_whitelist() {
@@ -104,7 +103,7 @@ class ProudSearch extends \ProudPlugin {
     // Filter out from total
     global $wp_post_types;
     $to_be_filtered = array_keys( $wp_post_types );
-    return array_diff( $to_be_filtered, $to_filter );
+    return array_values( array_diff( $to_be_filtered, $to_filter ) );
   }
 
 	// Process potential search input
@@ -178,7 +177,7 @@ class ProudSearch extends \ProudPlugin {
    */
   public function post_meta( $post_type ) {
     switch( $post_type ) {
-      case 'agencies':
+      case 'agency':
         return array(
           'icon' => 'fa-university',
           'weight' => -8,
@@ -235,7 +234,7 @@ class ProudSearch extends \ProudPlugin {
     else {
       $url = esc_url( get_permalink( $post ) );
     }
-    return $url;
+    return apply_filters('proud_search_post_url', $url, $post);
   }
 
   /**
@@ -247,6 +246,7 @@ class ProudSearch extends \ProudPlugin {
     }
     // Try to attach actions meta
     \Proud\ActionsApp\attach_actions_meta($post);
+
     $data_attr = '';
     // Add actions open?
     if( empty( $post->action_url ) && !empty( $post->action_attr ) ) {
@@ -257,10 +257,11 @@ class ProudSearch extends \ProudPlugin {
       $data_attr .= ' data-proud-navbar-hash="' . $post->action_hash . '"';
     }
     
-    return sprintf( '<a href="%s"%s rel="bookmark">%s</a>', 
-      $this->get_post_url( $post ),
-      $data_attr,
-      $title
+    // Return link html filtered
+    return str_replace( 
+      array( '%href', '%attrs', '%text', '%append' ),
+      apply_filters( 'proud_search_post_args', array( $this->get_post_url( $post ), $data_attr, $title, '' ), $post ), 
+      '<span class="title-span"><a href="%href"%attrs rel="bookmark">%text</a></span>%append' 
     );
   }
 
@@ -282,10 +283,11 @@ class ProudSearch extends \ProudPlugin {
 		$s = !empty($s) ? $s : trim( stripslashes( $_GET['q'] ) );
 
 		$query_args = apply_filters( 'wpss_search_query_args', array(
-			's'           => $s,
-      'post_type'   => $this->search_whitelist(),
+			's'=> $s,
+      'proud_search_ajax' => true,
+      'post_type' => $this->search_whitelist(),
 			'post_status' => 'publish'
-		), $s );
+		), $s, false );
 
 		$query = new WP_Query( $query_args );
 
@@ -296,7 +298,7 @@ class ProudSearch extends \ProudPlugin {
         \Proud\ActionsApp\attach_actions_meta($post);
         $post_type = $post->post_type;
 				$post_settings = $this->post_meta( $post_type );
-				$out[] = array(
+				$out[] = apply_filters( 'proud_search_ajax_post', array(
 					'weight'      => $post_settings['weight'],
 					'icon'        => $post_settings['icon'], // @todo
 					'title'       => $post->post_title,
@@ -305,7 +307,7 @@ class ProudSearch extends \ProudPlugin {
           'action_hash' => !empty( $post->action_hash ) ? $post->action_hash : '',
           'action_url'  => !empty( $post->action_url ) ? $post->action_url : '', // currently only used for linked out
           'url'         => $this->get_post_url( $post ),
-        );
+        ), $post );
 			}
 			if ($return === 'json'){
         wp_send_json($out);
@@ -363,7 +365,7 @@ class ProudSearch extends \ProudPlugin {
   public function rest_get_search( $request ) {
     return $this->ajax_response( $request->get_param( 'term' ), 'return' );
   }
-}  // End of class Obenland_Wp_Search_Suggest
+}  // End of class ProudSearch
 
 
 $proudsearch = new ProudSearch;
