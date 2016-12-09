@@ -26,6 +26,7 @@ class ProudWordpressSearch extends ProudSearchPage {
     );
     ?>
     <?php the_widget('SearchBox'); ?>
+    <?php echo apply_filters( 'proud_search_page_message', '' ); ?>
     <?php $search_results->print_list(); ?>
     <?php
   }
