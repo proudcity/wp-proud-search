@@ -103,7 +103,7 @@ class ProudSearch extends \ProudPlugin {
     // Filter out from total
     global $wp_post_types;
     $to_be_filtered = array_keys( $wp_post_types );
-    return array_values( array_diff( $to_be_filtered, $to_filter ) );
+    return apply_filters( 'proud_search_whitelist', array_values( array_diff( $to_be_filtered, $to_filter ) ) );
   }
 
 	// Process potential search input
@@ -173,51 +173,61 @@ class ProudSearch extends \ProudPlugin {
   }
 
   /**
+   * Dumb-cached function returns meta values 
+   */
+  public function post_type_meta_values() {
+    static $post_type_meta = null;
+    if( null === $post_type_meta ) {
+      $post_type_meta = apply_filters( 'proud_search_post_type_meta', [
+        'agency' => [
+          'icon' => 'fa-university',
+          'weight' => -8,
+        ],
+        'event' => [
+          'icon' => 'fa-calendar-o',
+          'weight' => -3,
+        ],
+        'staff-member' => [
+          'icon' => ' fa-user',
+          'weight' => 2,
+        ],
+        'post' => [
+          'icon' => ' fa-newspaper-o',
+          'weight' => 2,
+        ],
+        'payment' => [
+          'icon' => 'fa-credit-card',
+          'weight' => -9,
+        ],
+        'issue' => [
+          'icon' => 'fa-exclamation-triangle',
+          'weight' => -5,
+        ],
+        'document' => [
+          'icon' => 'fa-file-text-o',
+          'weight' => -3,
+        ],
+        'question' => [
+          'icon' => 'fa-question',
+          'weight' => -7,
+        ],
+        'default' => [
+          'icon' => 'fa-file-o',
+          'weight' => 1
+        ],
+      ] );
+    }
+    return $post_type_meta;
+  }
+
+  /**
    * Returns formatting info for a post type
    */
   public function post_meta( $post_type ) {
-    switch( $post_type ) {
-      case 'agency':
-        return array(
-          'icon' => 'fa-university',
-          'weight' => -8,
-        );
-      case 'event':
-        return array(
-          'icon' => 'fa-calendar-o',
-          'weight' => -3,
-        );
-      case 'post':
-        return array(
-          'icon' => ' fa-newspaper-o',
-          'weight' => 2,
-        );
-      case 'payment':
-        return array(
-          'icon' => 'fa-credit-card',
-          'weight' => -9,
-        );
-      case 'issue':
-        return array(
-          'icon' => 'fa-exclamation-triangle',
-          'weight' => -5,
-        );
-      case 'document':
-        return array(
-          'icon' => 'fa-file-text-o',
-          'weight' => -3,
-        );
-      case 'question':
-        return array(
-          'icon' => 'fa-question',
-          'weight' => -7,
-        );
-      default:
-        return array(
-          'icon' => 'fa-file-o',
-          'weight' => 1
-        );
-    }
+    $post_type_meta = $this->post_type_meta_values();
+    return !empty( $post_type_meta[$post_type] ) 
+         ? $post_type_meta[$post_type] 
+         : $post_type_meta['default'];
   }
 
   /** 
