@@ -34,12 +34,9 @@ class ProudSearch extends \ProudPlugin {
 
 	/**
 	 * Constructor
-	 *
-	 * @author	Konstantin Obenland
-	 * @since	1.0 - 16.04.2011
 	 * @access	public
 	 *
-	 * @return	Obenland_Wp_Search_Suggest
+	 * @return	ProudSearch
 	 */
 	public function __construct() {
 
@@ -90,20 +87,35 @@ class ProudSearch extends \ProudPlugin {
   //   }
   // }
 
-  // Returns list of post types to be searched on
-  public function search_whitelist() {
+  /**
+   * Returns list of post types to be searched on
+   *
+   * @param bool $labels: should labels be returned with the whitelist?
+   *
+   * @return array
+   */
+  public function search_whitelist( $labels = false ) {
     // Build list of post types to ignore
     $to_filter = apply_filters( 'proud_search_exclude', [
       'attachment',
       'revision',
       'nav_menu_item',
       'event-recurring',
-      'redirect_rule'
+      'redirect_rule',
+      'customize_changeset',
+      'custom_css'
     ] );
     // Filter out from total
     global $wp_post_types;
-    $to_be_filtered = array_keys( $wp_post_types );
-    return apply_filters( 'proud_search_whitelist', array_values( array_diff( $to_be_filtered, $to_filter ) ) );
+    // Get post types
+    $to_be_filtered = apply_filters( 
+      'proud_search_whitelist', 
+      array_map( create_function( '$o', 'return $o->label;' ), $wp_post_types ) 
+    );
+    $whitelist = apply_filters( 'proud_search_whitelist', array_diff_key( $to_be_filtered, array_flip( $to_filter ) ) );
+    return $labels 
+         ? $whitelist 
+         : array_keys( $whitelist );
   }
 
 	// Process potential search input
@@ -272,7 +284,7 @@ class ProudSearch extends \ProudPlugin {
     return str_replace( 
       array( '%href', '%attrs', '%text', '%append' ),
       apply_filters( 'proud_search_post_args', array( $this->get_post_url( $post ), $data_attr, $title, '' ), $post ), 
-      '<span class="title-span"><a href="%href"%attrs rel="bookmark">%text</a></span>%append' 
+      '<a href="%href"%attrs rel="bookmark"><span class="title-span">%text</span>%append</a>' 
     );
   }
 
@@ -298,7 +310,7 @@ class ProudSearch extends \ProudPlugin {
       'proud_search_ajax' => true,
       'post_type' => $this->search_whitelist(),
 			'post_status' => 'publish'
-		), $s, false );
+		) );
 
 		$query = new WP_Query( $query_args );
 
