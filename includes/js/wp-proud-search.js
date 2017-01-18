@@ -41,7 +41,7 @@ var decodeEntities = (function() {
         settings.proud_search.global.params.q = value || $(selector).val();
         var $wrapper = $('#proud-search-autocomplete');
         var location = window.location.protocol + '//' + window.location.hostname + window.location.pathname;
-        location = location[0] != undefined ? location[0] : location;
+        // location = location[0] != undefined ? location[0] : location;
         $.ajax({
           url: settings.proud_search.global.url,
           data: settings.proud_search.global.params,
