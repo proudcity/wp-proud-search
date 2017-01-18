@@ -68,10 +68,9 @@ var decodeEntities = (function() {
                         hitType: 'event',
                         eventCategory: 'SearchClick',
                         eventLabel: item.title,
-                        eventAction: settings.proud_search.global.params.q,
+                        eventAction: item.url,
                         eventValue: 1
                       });
-                      ga('send', 'pageview', '/search-site/?term=' + settings.proud_search.global.params.q);
                       switch (item.type) {
                         // Action app content
                         case 'payment':
