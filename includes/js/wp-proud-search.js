@@ -36,11 +36,12 @@ var decodeEntities = (function() {
         return window.location = url;
       }
 
+      var location = window.location.protocol + '//' + window.location.hostname + window.location.pathname;
+
       var proud_autocomplete = function(value, selector) {
         selector = selector || '#proud-search-input';
         settings.proud_search.global.params.q = value || $(selector).val();
         var $wrapper = $('#proud-search-autocomplete');
-        var location = window.location.protocol + '//' + window.location.hostname + window.location.pathname;
         // location = location[0] != undefined ? location[0] : location;
         $.ajax({
           url: settings.proud_search.global.url,
@@ -118,6 +119,33 @@ var decodeEntities = (function() {
         
       }
 
+      var $body = $('body'),
+          searchPage = $body.hasClass('search-site'); // on search page?
+
+      // analytics for search page
+      if(searchPage) {
+        $body.once('proud-search-ga', function() {
+          // Send page view
+          ga('send', {
+            hitType: 'event',
+            eventCategory: 'SearchCustom',
+            eventLabel: settings.proud_search.global.search_term,
+            eventAction: location
+          });
+
+          // setup results clicks
+          $('.search-title a').click(function(e) {
+            ga('send', {
+              hitType: 'event',
+              eventCategory: 'SearchCustomClick',
+              eventLabel: e.target.text,
+              eventAction: e.target.href
+            });
+          });
+        });
+      }
+
+      // Type watch
       var options = {
         callback: proud_autocomplete,
         wait: 250,
@@ -125,10 +153,6 @@ var decodeEntities = (function() {
         captureLength: 2
       }
 
-      var $body = $('body'),
-          searchPage = $body.hasClass('search-site'); // on search page?
-
-      // Type watch
       $("#proud-search-input").once('proud-search-ahead', function() {
         $(this).typeWatch( options );
       });

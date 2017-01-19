@@ -142,6 +142,7 @@ class ProudSearch extends \ProudPlugin {
 		        'action'   => 'wp-proud-search',
 		        '_wpnonce' => wp_create_nonce( 'wp-proud-search' ),
 		      ),
+          'search_term' => !empty( $_REQUEST[self::_SEARCH_PARAM] ) ? $_REQUEST[self::_SEARCH_PARAM] : null
 		   	]
 			]
 		]);
