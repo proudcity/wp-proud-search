@@ -54,6 +54,13 @@ var decodeEntities = (function() {
               eventAction: location,
               eventValue: 1
             });
+            ga('send', {
+              hitType: 'event',
+              eventCategory: 'Score',
+              eventLabel: 'SearchAutocomplete',
+              eventAction: location,
+              eventValue: 1
+            });
             $wrapper.html('');
             if (data.length) {
               $.each(data, function( index, item ) {
