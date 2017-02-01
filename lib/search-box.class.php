@@ -29,8 +29,8 @@ class SearchBox extends Core\ProudWidget {
 
   public function enqueueFrontend() {
     $path = plugins_url('../includes/js/',__FILE__);
-    wp_enqueue_script( 'typewatch', $path . 'jquery.typewatch.js', [ 'jquery' ], false, true );
-    wp_enqueue_script( 'wp-proud-search', $path . 'wp-proud-search.js', [ 'typewatch' ], false, true );
+    // wp_enqueue_script( 'typewatch', $path . 'jquery.typewatch.js', [ 'jquery' ], false, true );
+    wp_enqueue_script( 'wp-proud-search', $path . 'wp-proud-search.js', [ 'proud-actions-app' ], false, true );
     // wp_register_style( 'wp-proud-search', $path . '../css/wpss-search-suggest.css', [] );
   }
 
@@ -58,9 +58,10 @@ class SearchBox extends Core\ProudWidget {
     ?>
     <form method="post" class="form-inline get-started search-form align-left" id="wrapper-search" style="margin-top:30px" action="">
       <?php wp_nonce_field($proudsearch::_SEARCH_NONCE); ?>
-      <div class="input-group">
+      <div ng-controller="searchBoxController" class="input-group">
         <input 
-          id="proud-search-input" class="form-control input-lg" type="text" autocomplete="off"
+          id="proud-search-input" class="form-control input-lg" type="text"
+          ng-model="term" ng-model-options='{ debounce: 250 }' ng-change='searchSubmit()'
           placeholder="<?php print $instance['placeholder']; ?>" 
           name="<?php print 'search_' . $proudsearch::_SEARCH_PARAM; ?>" 
           value="<?php print $query; ?>"
@@ -69,7 +70,9 @@ class SearchBox extends Core\ProudWidget {
           <button type="submit" value="Go" class="btn btn-primary btn-lg" id="proud-search-submit"><i class="fa fa-search"></i></button>
         </span>
       </div>
-      <ul id="proud-search-autocomplete" class="search-autosuggest"></ul>
+      <div class="search-autosuggest-wrap">
+        <results-wrap show-additional="true"></results-wrap>
+      </div>
     </form>
     <?php
   }
