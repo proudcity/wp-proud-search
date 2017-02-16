@@ -24,13 +24,6 @@ class ProudWordpressSearch extends ProudSearchPage {
       null,
       true
     );
-    ?>
-    <?php the_widget('SearchBox'); ?>
-    <?php echo apply_filters( 'proud_search_page_message', '' ); ?>
-    <h3>Filters</h3>
-    <?php $search_results->print_filters(); ?> 
-    <h3>Results</h3>
-    <?php $search_results->print_list(); ?>
-    <?php
+    include apply_filters('proud_search_page_template', plugin_dir_path(__FILE__) . '../templates/search-page.php');
   }
 }

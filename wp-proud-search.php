@@ -103,7 +103,8 @@ class ProudSearch extends \ProudPlugin {
       'event-recurring',
       'redirect_rule',
       'customize_changeset',
-      'custom_css'
+      'custom_css',
+      'location'
     ] );
     // Filter out from total
     global $wp_post_types;
@@ -224,6 +225,14 @@ class ProudSearch extends \ProudPlugin {
           'icon' => 'fa-question',
           'weight' => -7,
         ],
+        'proud_location' => [
+          'icon' => 'fa-globe',
+          'weight' => 2,
+        ],
+        'location' => [
+          'icon' => 'fa-globe',
+          'weight' => 2,
+        ],
         'default' => [
           'icon' => 'fa-file-o',
           'weight' => 1
@@ -284,7 +293,7 @@ class ProudSearch extends \ProudPlugin {
     return str_replace( 
       array( '%href', '%attrs', '%text', '%append' ),
       apply_filters( 'proud_search_post_args', array( $this->get_post_url( $post ), $data_attr, $title, '' ), $post ), 
-      '<a href="%href"%attrs rel="bookmark"><span class="title-span">%text</span>%append</a>' 
+      '<span class="title-span"><a href="%href"%attrs rel="bookmark">%text</a></span>%append' 
     );
   }
 
