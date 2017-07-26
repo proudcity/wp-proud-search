@@ -71,16 +71,24 @@ var decodeEntities = (function() {
         angular.bootstrap( $searchForm, ['proudSearchParent']);
       }
 
+      var tabTimer;
+
       // Search box in content (not overlay)
       // Attach overlay open
-      $(".wrap #proud-search-input").once('proud-search', function() {
+      $(".wrap #wrapper-search").once('proud-search', function() {
         // if search page, override class
         var classOverride = null;
-        $(this).on('focus', function() {
-          if(!$body.hasClass('search-active') && !$body.hasClass('search-active-lite')) {
-            Proud.proudNav.triggerOverlay('search', null, classOverride);
-          }
-        });
+        $(this).find('input,label,button')
+          .focus(function() {
+            clearTimeout(tabTimer);
+            if(!$body.hasClass('search-active') && !$body.hasClass('search-active-lite')) {
+              Proud.proudNav.triggerOverlay('search', null, classOverride);
+            }
+          }).blur(function() {
+            tabTimer = setTimeout(function() {
+              Proud.proudNav.closeLayers(['search']);
+            }, 1);
+          });
       });
 
       function focusSearchInput() {

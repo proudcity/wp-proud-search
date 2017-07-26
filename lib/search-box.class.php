@@ -59,7 +59,7 @@ class SearchBox extends Core\ProudWidget {
     <form method="post" class="form-inline get-started search-form align-left" id="wrapper-search" style="margin-top:30px" action="">
       <?php wp_nonce_field($proudsearch::_SEARCH_NONCE); ?>
       <div ng-controller="searchBoxController" class="input-group">
-        <label class="sr-only">Search Site</label>
+        <label for="proud-search-input" class="sr-only">Search Site</label>
         <input 
           id="proud-search-input" class="form-control input-lg" type="text"
           ng-model="term" ng-model-options='{ debounce: 250 }' ng-change='searchSubmit()'
@@ -68,7 +68,7 @@ class SearchBox extends Core\ProudWidget {
           value="<?php print $query; ?>"
         >
         <span class="input-group-btn">
-          <button type="submit" value="Go" class="btn btn-primary btn-lg" id="proud-search-submit"><i aria-hidden="true" class="fa fa-search"></i></button>
+          <button type="submit" value="Go" class="btn btn-primary btn-lg" id="proud-search-submit"><i aria-hidden="true" class="fa fa-search"></i><span class="sr-only">Search</span></button>
         </span>
       </div>
       <div class="search-autosuggest-wrap">
