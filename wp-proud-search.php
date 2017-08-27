@@ -222,7 +222,7 @@ class ProudSearch extends \ProudPlugin {
           'weight' => -3,
         ],
         'question' => [
-          'icon' => 'fa-question',
+          'icon' => 'fa-question-circle',
           'weight' => -7,
         ],
         'proud_location' => [
