@@ -103,7 +103,8 @@ class ProudSearch extends \ProudPlugin {
 			'redirect_rule',
 			'customize_changeset',
 			'custom_css',
-			'location'
+			'location',
+			'directory',
 		] );
 		// Filter out from total
 		global $wp_post_types;
