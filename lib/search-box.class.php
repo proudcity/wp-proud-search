@@ -53,7 +53,7 @@ class SearchBox extends Core\ProudWidget {
     // Filter the search page url. Used for multi-language search forms.
     $url = apply_filters( 'proud_filter_search_page_url', $url, $get_page_info->ID );
     // Get active search
-    $query = empty($_REQUEST[$proudsearch::_SEARCH_PARAM]) ? '' : $_REQUEST[$proudsearch::_SEARCH_PARAM];
+    $query = empty($_REQUEST[$proudsearch::_SEARCH_PARAM]) ? '' : esc_attr($_REQUEST[$proudsearch::_SEARCH_PARAM]);
 
     ?>
     <form method="post" class="form-inline get-started search-form align-left" id="wrapper-search" style="margin-top:30px" action="">

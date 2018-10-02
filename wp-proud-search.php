@@ -156,7 +156,7 @@ class ProudSearch extends \ProudPlugin {
 						'action'   => 'wp-proud-search',
 						'_wpnonce' => wp_create_nonce( 'wp-proud-search' ),
 					),
-					'search_term' => ! empty( $_REQUEST[ self::_SEARCH_PARAM ] ) ? $_REQUEST[ self::_SEARCH_PARAM ] : null
+					'search_term' => ! empty( $_REQUEST[ self::_SEARCH_PARAM ] ) ? sanitize_text_field( $_REQUEST[ self::_SEARCH_PARAM ] ) : null
 				]
 			]
 		] );
@@ -373,7 +373,7 @@ class ProudSearch extends \ProudPlugin {
 		check_ajax_referer( 'wpss-post-url' );
 
 		global $wpdb;
-		$post = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s LIMIT 1", trim( stripslashes( $_REQUEST['title'] ) ) ) );
+		$post = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s LIMIT 1", trim( sanitize_text_field( stripslashes( $_REQUEST['title'] ) ) ) ) );
 
 		if ( $post ) {
 			echo get_permalink( $post );
