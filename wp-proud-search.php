@@ -126,7 +126,7 @@ class ProudSearch extends \ProudPlugin {
 		if ( isset( $_POST['_wpnonce'] ) && ! empty( $_POST[ 'search_' . self::_SEARCH_PARAM ] ) ) {
 			// See if input verifies
 			if ( wp_verify_nonce( $_POST['_wpnonce'], self::_SEARCH_NONCE ) ) {
-				$param         = self::_SEARCH_PARAM . '=' . urlencode( sanitize_text_field( $_POST[ 'search_' . self::_SEARCH_PARAM ] ) );
+				$param         = self::_SEARCH_PARAM . '=' . urlencode(  stripcslashes( sanitize_text_field( $_POST[ 'search_' . self::_SEARCH_PARAM ] ) ) );
 				$get_page_info = self::get_search_page();
 				$url           = get_permalink( $get_page_info->ID );
 				$url           .= strpos( $url, '?' ) > 0 ? '&' : '?';
@@ -156,7 +156,7 @@ class ProudSearch extends \ProudPlugin {
 						'action'   => 'wp-proud-search',
 						'_wpnonce' => wp_create_nonce( 'wp-proud-search' ),
 					),
-					'search_term' => ! empty( $_REQUEST[ self::_SEARCH_PARAM ] ) ? sanitize_text_field( $_REQUEST[ self::_SEARCH_PARAM ] ) : null
+					'search_term' => ! empty( $_GET[ self::_SEARCH_PARAM ] ) ? sanitize_text_field( stripcslashes( $_GET[ self::_SEARCH_PARAM ] ) ) : null
 				]
 			]
 		] );
@@ -373,7 +373,7 @@ class ProudSearch extends \ProudPlugin {
 		check_ajax_referer( 'wpss-post-url' );
 
 		global $wpdb;
-		$post = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s LIMIT 1", trim( sanitize_text_field( stripslashes( $_REQUEST['title'] ) ) ) ) );
+		$post = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s LIMIT 1", trim( sanitize_text_field( stripslashes( $_GET['title'] ) ) ) ) );
 
 		if ( $post ) {
 			echo get_permalink( $post );

@@ -53,7 +53,7 @@ class SearchBox extends Core\ProudWidget {
     // Filter the search page url. Used for multi-language search forms.
     $url = apply_filters( 'proud_filter_search_page_url', $url, $get_page_info->ID );
     // Get active search
-    $query = empty($_REQUEST[$proudsearch::_SEARCH_PARAM]) ? '' : esc_attr($_REQUEST[$proudsearch::_SEARCH_PARAM]);
+    $query = empty($_GET[$proudsearch::_SEARCH_PARAM]) ? '' : esc_attr( stripcslashes( $_GET[$proudsearch::_SEARCH_PARAM] ) );
 
     ?>
     <form method="post" class="form-inline get-started search-form align-left" id="wrapper-search" style="margin-top:30px" action="">
@@ -65,7 +65,7 @@ class SearchBox extends Core\ProudWidget {
           ng-model="term" ng-model-options='{ debounce: 250 }' ng-change='searchSubmit()'
           placeholder="<?php print $instance['placeholder']; ?>" 
           name="<?php print 'search_' . $proudsearch::_SEARCH_PARAM; ?>" 
-          value="<?php print $query; ?>"
+          value="<?php echo esc_attr( $query ); ?>"
         >
         <span class="input-group-btn">
           <button type="submit" value="Go" class="btn btn-primary btn-lg" id="proud-search-submit"><i aria-hidden="true" class="fa fa-search"></i><span class="sr-only">Search</span></button>
