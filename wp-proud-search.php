@@ -327,7 +327,8 @@ class ProudSearch extends \ProudPlugin {
 			's'                 => $s,
 			'proud_search_ajax' => true,
 			'post_type'         => $this->search_whitelist(),
-			'post_status'       => 'publish'
+			'post_status'       => 'publish',
+			'no_found_rows'     => true
 		) );
 
 		$query = new WP_Query( $query_args );
