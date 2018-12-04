@@ -324,11 +324,14 @@ class ProudSearch extends \ProudPlugin {
 		$s = ! empty( $s ) ? $s : trim( stripslashes( $_GET['q'] ) );
 
 		$query_args = apply_filters( 'wpss_search_query_args', array(
-			's'                 => $s,
-			'proud_search_ajax' => true,
-			'post_type'         => $this->search_whitelist(),
-			'post_status'       => 'publish',
-			'no_found_rows'     => true
+			's'                      => $s,
+			'proud_search_ajax'      => true,
+			'post_type'              => $this->search_whitelist(),
+			'post_status'            => 'publish',
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => true,
+			'no_found_rows'          => true,
+			'cache_results'          => false,
 		) );
 
 		$query = new WP_Query( $query_args );
