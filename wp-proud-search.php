@@ -105,6 +105,9 @@ class ProudSearch extends \ProudPlugin {
 			'custom_css',
 			'location',
 			'directory',
+			'oembed_cache',
+			'user_request',
+			'amn_smtp'
 		] );
 		// Filter out from total
 		global $wp_post_types;
