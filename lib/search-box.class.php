@@ -56,7 +56,7 @@ class SearchBox extends Core\ProudWidget {
     $query = empty($_GET[$proudsearch::_SEARCH_PARAM]) ? '' : esc_attr( stripcslashes( $_GET[$proudsearch::_SEARCH_PARAM] ) );
 
     ?>
-    <form method="post" class="form-inline get-started search-form align-left" id="wrapper-search" style="margin-top:30px" action="">
+    <form method="post" class="form-inline get-started search-form align-left" id="wrapper-search" style="margin-top:30px" action="" autocomplete="off">
       <?php wp_nonce_field($proudsearch::_SEARCH_NONCE); ?>
       <div ng-controller="searchBoxController" class="input-group">
         <label for="proud-search-input" class="sr-only">Search Site</label>
@@ -66,6 +66,7 @@ class SearchBox extends Core\ProudWidget {
           placeholder="<?php print $instance['placeholder']; ?>" 
           name="<?php print 'search_' . $proudsearch::_SEARCH_PARAM; ?>" 
           value="<?php echo esc_attr( $query ); ?>"
+          autocomplete="off"
         >
         <span class="input-group-btn">
           <button type="submit" value="Go" class="btn btn-primary btn-lg" id="proud-search-submit"><i aria-hidden="true" class="fa fa-search"></i><span class="sr-only">Search</span></button>
