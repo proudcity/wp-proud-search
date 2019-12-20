@@ -74,38 +74,27 @@ var decodeEntities = (function() {
         angular.bootstrap( $searchForm, ['proudSearchParent']);
       }
 
-      var searchTabTimer = null;
-
       // Search box in content (not overlay)
       // Attach overlay open
       $(".wrap #wrapper-search").once('proud-search', function() {
-        // if search page, override class
-        var classOverride = null;
-        $(this).on('focusin', function() {
-          if (searchTabTimer) {
-            clearTimeout(searchTabTimer);
+        $('#proud-search-input').on('focus', function() {
+          if (!$body.hasClass('search-active') && !$body.hasClass('search-active-lite')) {
+            Proud.proudNav.triggerOverlay('search', null, null);
           }
-          if(!$body.hasClass('search-active') && !$body.hasClass('search-active-lite')) {
-            Proud.proudNav.triggerOverlay('search', null, classOverride);
-          }
-        }).on('focusout', function() {
-          searchTabTimer = setTimeout(function() {
-            Proud.proudNav.closeLayers(['search']);
-          }, 1);
         });
       });
-
-      function focusSearchInput() {
-        if($body.hasClass('search-active') || $body.hasClass('search-active-lite')) {
-          $('#proud-search-input').focus();
-        }
-      }
 
       $body.on('proudNavClick', function(event) {
         switch(event['event']) {
           case 'search':
             event.callback(true, false, false, false, function() {
-              focusSearchInput();
+              if ($body.hasClass('search-active') || $body.hasClass('search-active-lite')) {
+                var $input = $('#proud-search-input');
+                $input.focus();
+                // Put at end
+                setTimeout(function(){ $input[0].selectionStart = $input[0].selectionEnd = 10000; }, 0);
+
+              }
             } );
             break;
         }
