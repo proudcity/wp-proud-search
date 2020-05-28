@@ -1,14 +1,13 @@
-
 // http://stackoverflow.com/a/9609450
-var decodeEntities = (function() {
+var decodeEntities = (function () {
   // this prevents any overhead from creating the object each time
   var element = document.createElement('div');
 
-  function decodeHTMLEntities (str) {
-    if(str && typeof str === 'string') {
+  function decodeHTMLEntities(str) {
+    if (str && typeof str === 'string') {
       // strip script/html tags
-      str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
-      str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
+      str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gim, '');
+      str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gim, '');
       element.innerHTML = str;
       str = element.textContent;
       element.textContent = '';
@@ -20,27 +19,32 @@ var decodeEntities = (function() {
   return decodeHTMLEntities;
 })();
 
-(function($, Proud) {
-
+(function ($, Proud) {
   Proud.behaviors.proud_search = {
-    attach: function(context, settings) {
-
-      if(settings.proud_actions_app && settings.proud_actions_app.global.search_granicus_site) {
+    attach: function (context, settings) {
+      if (
+        settings.proud_actions_app &&
+        settings.proud_actions_app.global.search_granicus_site
+      ) {
         // settings.proud_actions_app.global.search_granicus_site
-        Proud.behaviors.granicus_search = function(newValue) {
+        Proud.behaviors.granicus_search = function (newValue) {
           console.log(settings);
           console.log(this);
         }.bind(settings);
       }
 
-      var location = window.location.protocol + '//' + window.location.hostname + window.location.pathname;
-  
+      var location =
+        window.location.protocol +
+        '//' +
+        window.location.hostname +
+        window.location.pathname;
+
       var $body = $('body'),
-          searchPage = $body.hasClass('search-site'); // on search page?
+        searchPage = $body.hasClass('search-site'); // on search page?
 
       // analytics for search page
-      if(searchPage) {
-        $body.once('proud-search-ga', function() {
+      if (searchPage) {
+        $body.once('proud-search-ga', function () {
           if (ga === undefined) {
             return;
           }
@@ -49,16 +53,16 @@ var decodeEntities = (function() {
             hitType: 'event',
             eventCategory: 'SearchCustom',
             eventLabel: settings.proud_search.global.search_term,
-            eventAction: location
+            eventAction: location,
           });
 
           // setup results clicks
-          $('.search-title a').click(function(e) {
+          $('.search-title a').click(function (e) {
             ga('send', {
               hitType: 'event',
               eventCategory: 'SearchCustomClick',
               eventLabel: e.target.text,
-              eventAction: e.target.href
+              eventAction: e.target.href,
             });
           });
         });
@@ -66,39 +70,69 @@ var decodeEntities = (function() {
 
       // Init Angular Search module
       var $searchForm = $('#wrapper-search');
-      if($searchForm.length && !$searchForm.hasClass('ng-scope')) {
-        angular.module('proudSearchParent', [
-          'ProudBase',
-          'ProudSearch'
-        ]);
-        angular.bootstrap( $searchForm, ['proudSearchParent']);
+      if ($searchForm.length && !$searchForm.hasClass('ng-scope')) {
+        angular.module('proudSearchParent', ['ProudBase', 'ProudSearch']);
+        angular.bootstrap($searchForm, ['proudSearchParent']);
+      }
+
+      /**
+       * Once we're selected, make sure we close once focus is lost
+       * @param {*} e
+       */
+      function focusCheck(e) {
+        if (!$('#wrapper-search').find(e.relatedTarget || e.target).length) {
+          if (
+            $body.hasClass('search-active') ||
+            $body.hasClass('search-active-lite')
+          ) {
+            Proud.proudNav.triggerOverlay('search', null, null);
+          }
+
+          // clear focusCheck
+          $(document).off('focusout', '#wrapper-search', focusCheck);
+        }
       }
 
       // Search box in content (not overlay)
       // Attach overlay open
-      $(".wrap #wrapper-search").once('proud-search', function() {
-        $('#proud-search-input').on('focus', function() {
-          if (!$body.hasClass('search-active') && !$body.hasClass('search-active-lite')) {
+      $('.wrap #wrapper-search').once('proud-search', function () {
+        $('#proud-search-input').on('focus', function () {
+          if (
+            !$body.hasClass('search-active') &&
+            !$body.hasClass('search-active-lite')
+          ) {
             Proud.proudNav.triggerOverlay('search', null, null);
+
+            // Watch for out of focus
+            $(document).off('focusout', '#wrapper-search', focusCheck);
+            $(document).on('focusout', '#wrapper-search', focusCheck);
           }
         });
       });
 
-      $body.on('proudNavClick', function(event) {
-        switch(event['event']) {
+      $body.on('proudNavClick', function (event) {
+        switch (event['event']) {
           case 'search':
-            event.callback(true, false, false, false, function() {
-              if ($body.hasClass('search-active') || $body.hasClass('search-active-lite')) {
+            event.callback(true, false, false, false, function () {
+              if (
+                $body.hasClass('search-active') ||
+                $body.hasClass('search-active-lite')
+              ) {
                 var $input = $('#proud-search-input');
                 $input.focus();
                 // Put at end
-                setTimeout(function(){ $input[0].selectionStart = $input[0].selectionEnd = 10000; }, 0);
+                setTimeout(function () {
+                  $input[0].selectionStart = $input[0].selectionEnd = 10000;
+                }, 0);
 
+                // Watch for out of focus
+                $(document).off('focusout', '#wrapper-search', focusCheck);
+                $(document).on('focusout', '#wrapper-search', focusCheck);
               }
-            } );
+            });
             break;
         }
       });
-    }
+    },
   };
 })(jQuery, Proud);
