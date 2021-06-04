@@ -208,6 +208,10 @@ class ProudSearch extends \ProudPlugin {
 					'icon'   => ' fa-user',
 					'weight' => 2,
 				],
+                'page'          => [
+					'icon'   => 'fa-file-o',
+					'weight' => - 4,
+				],
 				'post'           => [
 					'icon'   => ' fa-newspaper-o',
 					'weight' => 2,
