@@ -47,9 +47,15 @@ class ProudGoogleSearch extends ProudSearchPage {
 
     global $proudsearch;
     $variables['key'] = $proudsearch::_SEARCH_PARAM;
+
+    ob_start();
     ?>
     <?php the_widget('SearchBox'); ?>
     <gcse:searchresults-only></gcse:searchresults-only>
     <?php
+    $content = ob_get_contents();
+    ob_clean();
+
+    return $content;
   }
 }

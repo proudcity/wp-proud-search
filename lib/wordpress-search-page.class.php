@@ -24,6 +24,12 @@ class ProudWordpressSearch extends ProudSearchPage {
       null,
       true
     );
+
+    ob_start();
     include apply_filters('proud_search_page_template', plugin_dir_path(__FILE__) . '../templates/search-page.php');
+    $content = ob_get_contents();
+    ob_clean();
+
+    return $content;
   }
 }
