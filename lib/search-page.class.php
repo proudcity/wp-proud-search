@@ -91,6 +91,6 @@ abstract class ProudSearchPage {
   }
 
   public function search_content() {
-    echo __("Override me please", 'proud-search');
+    return __("Override me please", 'proud-search');
   }
 }
