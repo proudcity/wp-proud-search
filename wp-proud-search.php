@@ -111,16 +111,44 @@ class ProudSearch extends \ProudPlugin {
 		] );
 		// Filter out from total
 		global $wp_post_types;
+
 		// Get post types
-		$to_be_filtered = apply_filters(
-			'proud_search_whitelist',
-			array_map( create_function( '$o', 'return $o->label;' ), $wp_post_types )
-		);
-		$whitelist      = apply_filters( 'proud_search_whitelist', array_diff_key( $to_be_filtered, array_flip( $to_filter ) ) );
+		$to_be_filtered = $this->extract_cpt_labels( $wp_post_types );
+
+		$whitelist = apply_filters( 'proud_search_whitelist', array_diff_key( $to_be_filtered, array_flip( $to_filter ) ) );
 
 		return $labels
 			? $whitelist
 			: array_keys( $whitelist );
+	}
+
+	/**
+	 * Builds array of the CPT names and labels
+	 *
+	 * @since 2022.12.05
+	 * @author Curtis
+	 * @access public
+	 *
+	 * @param   array       $wp_post_types          required                Array of post type objects
+	 * @return  array       $returned_types                                 Filtered returned types
+	 */
+	public function extract_cpt_labels( $wp_post_types ){
+
+		$returned_types = array();
+
+		foreach( $wp_post_types as $type ){
+			$returned_types[$type->name] = $type->label;
+		}
+
+		/**
+		 * Returns the array of post types for search
+		 *
+		 * @since 2022.12.06
+		 *
+		 * @param   array       $returned_types                 Array of filtered CPT ['name'] => label
+		 */
+		return apply_filters( 'proud_search_whitelist', (array) $returned_types );
+
 	}
 
 	// Process potential search input
