@@ -10,13 +10,13 @@ class ProudWordpressSearch extends ProudSearchPage {
   function __construct() {
     parent::__construct();
   }
-  
+
   public function search_content() {
 
     // Add scripts
     $search_results = new Core\TeaserList(
-      'search', 
-      'search', 
+      'search',
+      'search',
       array(
         'posts_per_page' => 20,
       ),
