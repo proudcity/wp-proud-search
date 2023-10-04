@@ -350,6 +350,7 @@ class ProudSearch extends \ProudPlugin {
 	 */
 	public function ajax_response( $s, $return = 'json' ) {
 
+		check_ajax_referer( $this->textdomain, '_wpnonce' );
 
 		//check_ajax_referer( $this->textdomain, '_wpnonce' );
 
