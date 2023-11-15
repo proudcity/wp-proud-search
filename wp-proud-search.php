@@ -3,7 +3,7 @@
 Plugin Name:        Proud Search
 Plugin URI:         http://getproudcity.com
 Description:        ProudCity distribution
-Version:            2023.10.04.1320
+Version:            2023.11.15.1138
 Author:             ProudCity
 Author URI:         http://getproudcity.com
 
@@ -352,8 +352,6 @@ class ProudSearch extends \ProudPlugin {
 
 		check_ajax_referer( $this->textdomain, '_wpnonce' );
 
-		//check_ajax_referer( $this->textdomain, '_wpnonce' );
-
 		$s = ! empty( $s ) ? $s : trim( stripslashes( $_GET['q'] ) );
 
 		$query_args = apply_filters( 'wpss_search_query_args', array(
@@ -365,6 +363,25 @@ class ProudSearch extends \ProudPlugin {
 			'update_post_meta_cache' => true,
 			'no_found_rows'          => true,
 			'cache_results'          => false,
+			'meta_query'			=> array(
+				'relation' => 'OR',
+				array(
+					'key' => '_event_start_local',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'relation' => 'AND',
+					array(
+						'key' => '_event_start_local',
+						'compare' => 'EXISTS',
+					),
+					array(
+						'key' => '_event_start_local',
+						'compare' => '>=',
+						'value' => date('Y-m-d H:i:s'),
+					),
+				),
+			),
 		) );
 
 		$query = new WP_Query( $query_args );
