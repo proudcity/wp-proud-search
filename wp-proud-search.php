@@ -377,6 +377,7 @@ class ProudSearch extends \ProudPlugin {
 					),
 					array(
 						'key' => '_event_start_local',
+						'type' => 'DATETIME',
 						'compare' => '>=',
 						'value' => date('Y-m-d H:i:s'),
 					),

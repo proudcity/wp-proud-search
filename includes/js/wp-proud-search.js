@@ -45,7 +45,7 @@ var decodeEntities = (function () {
       // analytics for search page
       if (searchPage) {
         $body.once('proud-search-ga', function () {
-          if (ga === undefined) {
+          if (typeof ga === 'undefined') {
             return;
           }
           // Send page view
