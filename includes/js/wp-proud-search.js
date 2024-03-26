@@ -49,21 +49,43 @@ var decodeEntities = (function () {
             return;
           }
           // Send page view
+		  /**
+			* @todo remove this kept around as reference during switch to new GA4
+			* method below. Has no ulitity after we verify this works
           ga('send', {
             hitType: 'event',
             eventCategory: 'SearchCustom',
             eventLabel: settings.proud_search.global.search_term,
             eventAction: location,
           });
+			*/
+
+			gtag( 'event', 'pcsearch', {
+				'hitType': 'event',
+				'eventCategory': 'SearchCustom',
+				'eventabel': settings.proud_search.global.search_term,
+				'eventAction': location,
+			});
 
           // setup results clicks
           $('.search-title a').click(function (e) {
+			  /**
+				* @todo remove this kept around as reference during switch to new GA4
+				* method below. Has no ulitity after we verify this works
             ga('send', {
               hitType: 'event',
               eventCategory: 'SearchCustomClick',
               eventLabel: e.target.text,
               eventAction: e.target.href,
             });
+			  **/
+
+			gtag( 'event', 'pcsearchtitleclick', {
+				'hitType': 'event',
+				'eventCategory': 'SearchCustomClick',
+				'eventabel': e.target.text,
+				'eventAction': e.target.href,
+			});
           });
         });
       }
