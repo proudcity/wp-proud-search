@@ -3,7 +3,7 @@
 Plugin Name:        Proud Search
 Plugin URI:         http://getproudcity.com
 Description:        ProudCity distribution
-Version:            2024.10.30.1256
+Version:            2025.10.30.1256
 Author:             ProudCity
 Author URI:         http://getproudcity.com
 
