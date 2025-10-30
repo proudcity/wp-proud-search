@@ -15,7 +15,7 @@ License:            Affero GPL v3
 // Load Extendible
 // -----------------------
 if ( ! class_exists( 'ProudPlugin' ) ) {
-	require_once( plugin_dir_path( __FILE__ ) . '../wp-proud-core/proud-plugin.class.php' );
+    require_once( plugin_dir_path( __FILE__ ) . '../wp-proud-core/proud-plugin.class.php' );
 }
 
 // Init rendered var for actions overlay
@@ -23,446 +23,448 @@ $GLOBALS['proud_search_box_rendered'] = false;
 
 class ProudSearch extends \ProudPlugin {
 
-	// Search form nonce
-	const _SEARCH_NONCE = 'proud_search_form_submit_nonce';
-	// Search by
-	const _SEARCH_PARAM = 'term';
-	// Search provider?
-	public static $search_type = 'wordpress';
-	// Search provider object
-	public static $provider;
+    // Search form nonce
+    const _SEARCH_NONCE = 'proud_search_form_submit_nonce';
+    // Search by
+    const _SEARCH_PARAM = 'term';
+    // Search provider?
+    public static $search_type = 'wordpress';
+    // Search provider object
+    public static $provider;
 
-	/**
-	 * Constructor
-	 * @access    public
-	 *
-	 * @return    ProudSearch
-	 */
-	public function __construct() {
+    /**
+     * Constructor
+     * @access    public
+     *
+     * @return    ProudSearch
+     */
+    public function __construct() {
 
-		parent::__construct( array(
-			'textdomain'  => 'wp-proud-search',
-			'plugin_path' => __FILE__,
-		) );
-		// init search type with settings
-		self::$search_type = get_option( 'search_service', self::$search_type );
-		// Load parent
-		require_once( plugin_dir_path( __FILE__ ) . 'lib/search-page.class.php' );
-		// Load search style
-		if ( 'google' == self::$search_type ) {
-			require_once( plugin_dir_path( __FILE__ ) . 'lib/google-search-page.class.php' );
-			self::$provider = new ProudGoogleSearch;
-		} else {
-			require_once( plugin_dir_path( __FILE__ ) . 'lib/wordpress-search-page.class.php' );
-			self::$provider = new ProudWordpressSearch;
-		}
+        parent::__construct( array(
+            'textdomain'  => 'wp-proud-search',
+            'plugin_path' => __FILE__,
+        ) );
+        // init search type with settings
+        self::$search_type = get_option( 'search_service', self::$search_type );
+        // Load parent
+        require_once( plugin_dir_path( __FILE__ ) . 'lib/search-page.class.php' );
+        // Load search style
+        if ( 'google' == self::$search_type ) {
+            require_once( plugin_dir_path( __FILE__ ) . 'lib/google-search-page.class.php' );
+            self::$provider = new ProudGoogleSearch;
+        } else {
+            require_once( plugin_dir_path( __FILE__ ) . 'lib/wordpress-search-page.class.php' );
+            self::$provider = new ProudWordpressSearch;
+        }
 
-		// Load widgets
-		$this->hook( 'plugins_loaded', 'init_widgets' );
+        // Load widgets
+        $this->hook( 'plugins_loaded', 'init_widgets' );
 
-		// Search submit
-		$this->hook( 'init', 'process_search' );
+        // Search submit
+        $this->hook( 'init', 'process_search' );
 
-		// Endpoints
-		$this->hook( 'wp_ajax_wp-proud-search', 'ajax_response' );
-		$this->hook( 'wp_ajax_nopriv_wp-proud-search', 'ajax_response' );
-		$this->hook( 'wp_ajax_wpss-post-url', 'post_url' );
-		$this->hook( 'wp_ajax_nopriv_wpss-post-url', 'post_url' );
+        // Endpoints
+        $this->hook( 'wp_ajax_wp-proud-search', 'ajax_response' );
+        $this->hook( 'wp_ajax_nopriv_wp-proud-search', 'ajax_response' );
+        $this->hook( 'wp_ajax_wpss-post-url', 'post_url' );
+        $this->hook( 'wp_ajax_nopriv_wpss-post-url', 'post_url' );
 
-		// ReST Integration
-		$this->rest_router();
+        // ReST Integration
+        $this->rest_router();
 
-		// Print in overlay?
-		$this->hook( 'proud_navbar_overlay_search', 'proud_seach_print_search' );
+        // Print in overlay?
+        $this->hook( 'proud_navbar_overlay_search', 'proud_seach_print_search' );
 
-		// Filter unwanted searches
-		// add_filter( 'pre_get_posts', array( $this, 'limit_post_types' ) );
-	}
+        // Filter unwanted searches
+        // add_filter( 'pre_get_posts', array( $this, 'limit_post_types' ) );
+    }
 
-	// // Limit search results on search
-	// public function limit_post_types($query) {
-	//   if ( !empty ( $query->query['proud_search'] ) && !is_admin() ) {
-	//     $query->set( 'post_type',  $this->search_whitelist() );
-	//   }
-	// }
+    // // Limit search results on search
+    // public function limit_post_types($query) {
+    //   if ( !empty ( $query->query['proud_search'] ) && !is_admin() ) {
+    //     $query->set( 'post_type',  $this->search_whitelist() );
+    //   }
+    // }
 
-	/**
-	 * Returns list of post types to be searched on
-	 *
-	 * @param bool $labels : should labels be returned with the whitelist?
-	 *
-	 * @return array
-	 */
-	public function search_whitelist( $labels = false ) {
-		// Build list of post types to ignore
-		$to_filter = apply_filters( 'proud_search_exclude', [
-			'attachment',
-			'revision',
-			'nav_menu_item',
-			'event-recurring',
-			'redirect_rule',
-			'customize_changeset',
-			'custom_css',
-			'location',
-			'directory',
-			'oembed_cache',
-			'user_request',
-			'amn_smtp'
-		] );
-		// Filter out from total
-		global $wp_post_types;
+    /**
+     * Returns list of post types to be searched on
+     *
+     * @param bool $labels : should labels be returned with the whitelist?
+     *
+     * @return array
+     */
+    public function search_whitelist( $labels = false ) {
+        // Build list of post types to ignore
+        $to_filter = apply_filters( 'proud_search_exclude', [
+            'attachment',
+            'revision',
+            'nav_menu_item',
+            'event-recurring',
+            'redirect_rule',
+            'customize_changeset',
+            'custom_css',
+            'location',
+            'directory',
+            'oembed_cache',
+            'user_request',
+            'amn_smtp'
+        ] );
+        // Filter out from total
+        global $wp_post_types;
 
-		// Get post types
-		$to_be_filtered = $this->extract_cpt_labels( $wp_post_types );
+        // Get post types
+        $to_be_filtered = $this->extract_cpt_labels( $wp_post_types );
 
-		$whitelist = apply_filters( 'proud_search_whitelist', array_diff_key( $to_be_filtered, array_flip( $to_filter ) ) );
+        $whitelist = apply_filters( 'proud_search_whitelist', array_diff_key( $to_be_filtered, array_flip( $to_filter ) ) );
 
-		return $labels
-			? $whitelist
-			: array_keys( $whitelist );
-	}
+        return $labels
+            ? $whitelist
+            : array_keys( $whitelist );
+    }
 
-	/**
-	 * Builds array of the CPT names and labels
-	 *
-	 * @since 2022.12.05
-	 * @author Curtis
-	 * @access public
-	 *
-	 * @param   array       $wp_post_types          required                Array of post type objects
-	 * @return  array       $returned_types                                 Filtered returned types
-	 */
-	public function extract_cpt_labels( $wp_post_types ){
+    /**
+     * Builds array of the CPT names and labels
+     *
+     * @since 2022.12.05
+     * @author Curtis
+     * @access public
+     *
+     * @param   array       $wp_post_types          required                Array of post type objects
+     * @return  array       $returned_types                                 Filtered returned types
+     */
+    public function extract_cpt_labels( $wp_post_types ){
 
-		$returned_types = array();
+        $returned_types = array();
 
-		foreach( $wp_post_types as $type ){
-			$returned_types[$type->name] = $type->label;
-		}
+        foreach( $wp_post_types as $type ){
+            $returned_types[$type->name] = $type->label;
+        }
 
-		/**
-		 * Returns the array of post types for search
-		 *
-		 * @since 2022.12.06
-		 *
-		 * @param   array       $returned_types                 Array of filtered CPT ['name'] => label
-		 */
-		return apply_filters( 'proud_search_whitelist', (array) $returned_types );
+        /**
+         * Returns the array of post types for search
+         *
+         * @since 2022.12.06
+         *
+         * @param   array       $returned_types                 Array of filtered CPT ['name'] => label
+         */
+        return apply_filters( 'proud_search_whitelist', (array) $returned_types );
 
-	}
+    }
 
-	// Process potential search input
-	public function process_search() {
-		// Do we have post?
-		if ( isset( $_POST['_wpnonce'] ) && ! empty( $_POST[ 'search_' . self::_SEARCH_PARAM ] ) ) {
-			// See if input verifies
-			if ( wp_verify_nonce( $_POST['_wpnonce'], self::_SEARCH_NONCE ) ) {
-				$param         = self::_SEARCH_PARAM . '=' . urlencode(  stripcslashes( sanitize_text_field( $_POST[ 'search_' . self::_SEARCH_PARAM ] ) ) );
-				$get_page_info = self::get_search_page();
-				$url           = get_permalink( $get_page_info->ID );
-				$url           .= strpos( $url, '?' ) > 0 ? '&' : '?';
-				// echo ($url . $param);
-				wp_redirect( $url . $param );
-				exit();
-			}
-		}
-	}
+    // Process potential search input
+    public function process_search() {
+        // Do we have post?
+        if ( isset( $_POST['_wpnonce'] ) && ! empty( $_POST[ 'search_' . self::_SEARCH_PARAM ] ) ) {
+            // See if input verifies
+            if ( wp_verify_nonce( $_POST['_wpnonce'], self::_SEARCH_NONCE ) ) {
+                $param         = self::_SEARCH_PARAM . '=' . urlencode(  stripcslashes( sanitize_text_field( $_POST[ 'search_' . self::_SEARCH_PARAM ] ) ) );
+                $get_page_info = self::get_search_page();
+                $url           = get_permalink( $get_page_info->ID );
+                $url           .= strpos( $url, '?' ) > 0 ? '&' : '?';
+                // echo ($url . $param);
+                wp_redirect( $url . $param );
+                exit();
+            }
+        }
+    }
 
-	// Init on plugins loaded
-	public function init_widgets() {
-		// Check search
-		// $this->process_search();
-		// Load plugins
-		require_once plugin_dir_path( __FILE__ ) . '/lib/search-box.class.php';
+    // Init on plugins loaded
+    public function init_widgets() {
+        // Check search
+        // $this->process_search();
+        // Load plugins
+        require_once plugin_dir_path( __FILE__ ) . '/lib/search-box.class.php';
 
-		// Add proud search settings
-		global $proudcore;
-		$proudcore->addJsSettings( [
-			'proud_search' => [
-				'global' => [
-					'url'         => admin_url( 'admin-ajax.php' ),
-					//'nonce'   => wp_create_nonce( 'wpss-post-url' ),
-					'max_results' => 10,
-					'params'      => array(
-						'action'   => 'wp-proud-search',
-						'_wpnonce' => wp_create_nonce( 'wp-proud-search' ),
-					),
-					'search_term' => ! empty( $_GET[ self::_SEARCH_PARAM ] ) ? sanitize_text_field( stripcslashes( $_GET[ self::_SEARCH_PARAM ] ) ) : null
-				]
-			]
-		] );
-	}
+        // Add proud search settings
+        global $proudcore;
+        $proudcore->addJsSettings( [
+            'proud_search' => [
+                'global' => [
+                    'url'         => admin_url( 'admin-ajax.php' ),
+                    //'nonce'   => wp_create_nonce( 'wpss-post-url' ),
+                    'max_results' => 10,
+                    'params'      => array(
+                        'action'   => 'wp-proud-search',
+                        '_wpnonce' => wp_create_nonce( 'wp-proud-search' ),
+                    ),
+                    'search_term' => ! empty( $_GET[ self::_SEARCH_PARAM ] ) ? sanitize_text_field( stripcslashes( $_GET[ self::_SEARCH_PARAM ] ) ) : null
+                ]
+            ]
+        ] );
+    }
 
 
-	// Return the search page
-	static function get_search_page() {
-		return self::$provider->get_search_page();
-	}
+    // Return the search page
+    static function get_search_page() {
+        return self::$provider->get_search_page();
+    }
 
-	// Respond to navbar footer hook
-	// Print widget if has not been rendered elsewhere
-	public function proud_seach_print_search() {
-		global $proudcore;
-		// Add rendered variable to JS
-		$proudcore->addJsSettings( [
-			'proud_search_box' => [
-				'global' => [
-					'render_in_overlay' => ! $GLOBALS['proud_search_box_rendered']
-				]
-			]
-		] );
-		// if not rendered on page yet, render in overlay
-		if ( ! $GLOBALS['proud_search_box_rendered'] ) {
-			the_widget( 'SearchBox' );
-		}
-	}
+    // Respond to navbar footer hook
+    // Print widget if has not been rendered elsewhere
+    public function proud_seach_print_search() {
+        global $proudcore;
+        // Add rendered variable to JS
+        $proudcore->addJsSettings( [
+            'proud_search_box' => [
+                'global' => [
+                    'render_in_overlay' => ! $GLOBALS['proud_search_box_rendered']
+                ]
+            ]
+        ] );
+        // if not rendered on page yet, render in overlay
+        if ( ! $GLOBALS['proud_search_box_rendered'] ) {
+            the_widget( 'SearchBox' );
+        }
+    }
 
-	/**
-	 * Dumb-cached function returns meta values
-	 */
-	public function post_type_meta_values() {
-		static $post_type_meta = null;
-		if ( null === $post_type_meta ) {
-			$post_type_meta = apply_filters( 'proud_search_post_type_meta', [
-				'agency'         => [
-					'icon'   => 'fa-university',
-					'weight' => - 8,
-				],
-				'event'          => [
-					'icon'   => 'fa-calendar-o',
-					'weight' => - 3,
-				],
-				'staff-member'   => [
-					'icon'   => ' fa-user',
-					'weight' => 2,
-				],
+    /**
+     * Dumb-cached function returns meta values
+     */
+    public function post_type_meta_values() {
+        static $post_type_meta = null;
+        if ( null === $post_type_meta ) {
+            $post_type_meta = apply_filters( 'proud_search_post_type_meta', [
+                'agency'         => [
+                    'icon'   => 'fa-university',
+                    'weight' => - 8,
+                ],
+                'event'          => [
+                    'icon'   => 'fa-calendar-o',
+                    'weight' => - 3,
+                ],
+                'staff-member'   => [
+                    'icon'   => ' fa-user',
+                    'weight' => 2,
+                ],
                 'page'          => [
-					'icon'   => 'fa-file-o',
-					'weight' => - 4,
-				],
-				'post'           => [
-					'icon'   => ' fa-newspaper-o',
-					'weight' => 2,
-				],
-				'payment'        => [
-					'icon'   => 'fa-credit-card',
-					'weight' => - 9,
-				],
-				'issue'          => [
-					'icon'   => 'fa-exclamation-triangle',
-					'weight' => - 5,
-				],
-				'document'       => [
-					'icon'   => 'fa-file-text-o',
-					'weight' => - 3,
-				],
-				'question'       => [
-					'icon'   => 'fa-question-circle',
-					'weight' => - 7,
-				],
-				'proud_location' => [
-					'icon'   => 'fa-globe',
-					'weight' => 2,
-				],
-				'location'       => [
-					'icon'   => 'fa-globe',
-					'weight' => 2,
-				],
-				'default'        => [
-					'icon'   => 'fa-file-o',
-					'weight' => 1
-				],
-			] );
-		}
+                    'icon'   => 'fa-file-o',
+                    'weight' => - 4,
+                ],
+                'post'           => [
+                    'icon'   => ' fa-newspaper-o',
+                    'weight' => 2,
+                ],
+                'payment'        => [
+                    'icon'   => 'fa-credit-card',
+                    'weight' => - 9,
+                ],
+                'issue'          => [
+                    'icon'   => 'fa-exclamation-triangle',
+                    'weight' => - 5,
+                ],
+                'document'       => [
+                    'icon'   => 'fa-file-text-o',
+                    'weight' => - 3,
+                ],
+                'question'       => [
+                    'icon'   => 'fa-question-circle',
+                    'weight' => - 7,
+                ],
+                'proud_location' => [
+                    'icon'   => 'fa-globe',
+                    'weight' => 2,
+                ],
+                'location'       => [
+                    'icon'   => 'fa-globe',
+                    'weight' => 2,
+                ],
+                'default'        => [
+                    'icon'   => 'fa-file-o',
+                    'weight' => 1
+                ],
+            ] );
+        }
 
-		return $post_type_meta;
-	}
+        return $post_type_meta;
+    }
 
-	/**
-	 * Returns formatting info for a post type
-	 */
-	public function post_meta( $post_type ) {
-		$post_type_meta = $this->post_type_meta_values();
+    /**
+     * Returns formatting info for a post type
+     */
+    public function post_meta( $post_type ) {
+        $post_type_meta = $this->post_type_meta_values();
 
-		return ! empty( $post_type_meta[ $post_type ] )
-			? $post_type_meta[ $post_type ]
-			: $post_type_meta['default'];
-	}
+        return ! empty( $post_type_meta[ $post_type ] )
+            ? $post_type_meta[ $post_type ]
+            : $post_type_meta['default'];
+    }
 
-	/**
-	 * Build search post url
-	 */
-	public function get_post_url( $post ) {
-		// Build URL
-		if ( $post->type === 'agency' ) {
-			$url = ⁠⁠⁠⁠Agency\get_agency_permalink( $post );
-		} else if ( ! empty( $post->action_url ) ) {
-			$url = $post->action_url;
-		} else {
-			$url = esc_url( get_permalink( $post ) );
-		}
+    /**
+     * Build search post url
+     */
+    public function get_post_url( $post ) {
+        // Build URL
+        if ( $post->type === 'agency' ) {
+            $url = ⁠⁠⁠⁠Agency\get_agency_permalink( $post );
+        } else if ( ! empty( $post->action_url ) ) {
+            $url = $post->action_url;
+        } else {
+            $url = esc_url( get_permalink( $post ) );
+        }
 
-		return apply_filters( 'proud_search_post_url', $url, $post );
-	}
+        return apply_filters( 'proud_search_post_url', $url, $post );
+    }
 
-	/**
-	 * Returns formatted title link for search result
-	 */
-	public function get_post_link( $post, $title = false ) {
-		if ( ! $title ) {
-			$title = $post->post_title;
-		}
-		// Try to attach actions meta
-		\Proud\ActionsApp\attach_actions_meta( $post );
+    /**
+     * Returns formatted title link for search result
+     */
+    public function get_post_link( $post, $title = false ) {
+        if ( ! $title ) {
+            $title = $post->post_title;
+        }
+        // Try to attach actions meta
+        if (class_exists("Proud\ActionsApp")) {
+            \Proud\ActionsApp\attach_actions_meta( $post );
+        }
 
-		$data_attr = '';
-		// Add actions open?
-		if ( empty( $post->action_url ) && ! empty( $post->action_attr ) ) {
-			$data_attr = ' data-proud-navbar="' . $post->action_attr . '"';
-		}
-		// Add actions hash?
-		if ( ! empty( $post->action_hash ) ) {
-			$data_attr .= ' data-proud-navbar-hash="' . $post->action_hash . '"';
-		}
+        $data_attr = '';
+        // Add actions open?
+        if ( empty( $post->action_url ) && ! empty( $post->action_attr ) ) {
+            $data_attr = ' data-proud-navbar="' . $post->action_attr . '"';
+        }
+        // Add actions hash?
+        if ( ! empty( $post->action_hash ) ) {
+            $data_attr .= ' data-proud-navbar-hash="' . $post->action_hash . '"';
+        }
 
-		// Return link html filtered
-		return str_replace(
-			array( '%href', '%attrs', '%text', '%append' ),
-			apply_filters( 'proud_search_post_args', array(
-				$this->get_post_url( $post ),
-				$data_attr,
-				$title,
-				''
-			), $post ),
-			'<span class="title-span"><a href="%href"%attrs rel="bookmark">%text</a></span>%append'
-		);
-	}
-
-
-	/**
-	 * Handles the AJAX request for the search term.
-	 *
-	 * @author Konstantin Obenland
-	 * @since  1.0 - 16.04.2011
-	 * @access public
-	 *
-	 * @return void
-	 */
-	public function ajax_response( $s, $return = 'json' ) {
-
-		check_ajax_referer( $this->textdomain, '_wpnonce' );
-
-		$s = ! empty( $s ) ? $s : trim( stripslashes( $_GET['q'] ) );
-
-		$query_args = apply_filters( 'wpss_search_query_args', array(
-			's'                      => $s,
-			'proud_search_ajax'      => true,
-			'post_type'              => $this->search_whitelist(),
-			'post_status'            => 'publish',
-			'update_post_term_cache' => false,
-			'update_post_meta_cache' => true,
-			'no_found_rows'          => true,
-			'cache_results'          => false,
-			'meta_query'			=> array(
-				'relation' => 'OR',
-				array(
-					'key' => '_event_start_local',
-					'compare' => 'NOT EXISTS',
-				),
-				array(
-					'relation' => 'AND',
-					array(
-						'key' => '_event_start_local',
-						'compare' => 'EXISTS',
-					),
-					array(
-						'key' => '_event_start_local',
-						'type' => 'DATETIME',
-						'compare' => '>=',
-						'value' => date('Y-m-d H:i:s'),
-					),
-				),
-			),
-		) );
-
-		$query = new WP_Query( $query_args );
-
-		if ( $query->posts ) {
-			$out = array();
-			// Run through results
-			foreach ( $query->posts as $post ) {
-				\Proud\ActionsApp\attach_actions_meta( $post );
-				$post_type     = $post->post_type;
-				$post_settings = $this->post_meta( $post_type );
-				$out[]         = apply_filters( 'proud_search_ajax_post', array(
-					'weight'      => $post_settings['weight'],
-					'icon'        => $post_settings['icon'],
-					// @todo
-					'title'       => $post->post_title,
-					'type'        => $post_type,
-					'action_attr' => ! empty( $post->action_attr ) ? $post->action_attr : '',
-					'action_hash' => ! empty( $post->action_hash ) ? $post->action_hash : '',
-					'action_url'  => ! empty( $post->action_url ) ? $post->action_url : '',
-					// currently only used for linked out
-					'url'         => $this->get_post_url( $post ),
-				), $post );
-			}
-			if ( $return === 'json' ) {
-				wp_send_json( $out );
-				wp_die();
-			} else {
-				return $out;
-			}
-		}
+        // Return link html filtered
+        return str_replace(
+            array( '%href', '%attrs', '%text', '%append' ),
+            apply_filters( 'proud_search_post_args', array(
+                $this->get_post_url( $post ),
+                $data_attr,
+                $title,
+                ''
+            ), $post ),
+            '<span class="title-span"><a href="%href"%attrs rel="bookmark">%text</a></span>%append'
+        );
+    }
 
 
-	}
+    /**
+     * Handles the AJAX request for the search term.
+     *
+     * @author Konstantin Obenland
+     * @since  1.0 - 16.04.2011
+     * @access public
+     *
+     * @return void
+     */
+    public function ajax_response( $s, $return = 'json' ) {
 
-	/**
-	 * Handles the AJAX request for a specific title.
-	 *
-	 * @author Konstantin Obenland
-	 * @since  2.0.0 - 29.12.2013
-	 * @access public
-	 *
-	 * @return void
-	 */
-	public function post_url() {
-		check_ajax_referer( 'wpss-post-url' );
+        check_ajax_referer( $this->textdomain, '_wpnonce' );
 
-		global $wpdb;
-		$post = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s LIMIT 1", trim( sanitize_text_field( stripslashes( $_GET['title'] ) ) ) ) );
+        $s = ! empty( $s ) ? $s : trim( stripslashes( $_GET['q'] ) );
 
-		if ( $post ) {
-			echo get_permalink( $post );
-		}
+        $query_args = apply_filters( 'wpss_search_query_args', array(
+            's'                      => $s,
+            'proud_search_ajax'      => true,
+            'post_type'              => $this->search_whitelist(),
+            'post_status'            => 'publish',
+            'update_post_term_cache' => false,
+            'update_post_meta_cache' => true,
+            'no_found_rows'          => true,
+            'cache_results'          => false,
+            'meta_query'            => array(
+                'relation' => 'OR',
+                array(
+                    'key' => '_event_start_local',
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => '_event_start_local',
+                        'compare' => 'EXISTS',
+                    ),
+                    array(
+                        'key' => '_event_start_local',
+                        'type' => 'DATETIME',
+                        'compare' => '>=',
+                        'value' => date('Y-m-d H:i:s'),
+                    ),
+                ),
+            ),
+        ) );
 
-		wp_die();
-	}
+        $query = new WP_Query( $query_args );
 
-	public function rest_router() {
-		add_action( 'rest_api_init', function () {
+        if ( $query->posts ) {
+            $out = array();
+            // Run through results
+            foreach ( $query->posts as $post ) {
+                \Proud\ActionsApp\attach_actions_meta( $post );
+                $post_type     = $post->post_type;
+                $post_settings = $this->post_meta( $post_type );
+                $out[]         = apply_filters( 'proud_search_ajax_post', array(
+                    'weight'      => $post_settings['weight'],
+                    'icon'        => $post_settings['icon'],
+                    // @todo
+                    'title'       => $post->post_title,
+                    'type'        => $post_type,
+                    'action_attr' => ! empty( $post->action_attr ) ? $post->action_attr : '',
+                    'action_hash' => ! empty( $post->action_hash ) ? $post->action_hash : '',
+                    'action_url'  => ! empty( $post->action_url ) ? $post->action_url : '',
+                    // currently only used for linked out
+                    'url'         => $this->get_post_url( $post ),
+                ), $post );
+            }
+            if ( $return === 'json' ) {
+                wp_send_json( $out );
+                wp_die();
+            } else {
+                return $out;
+            }
+        }
 
-			register_rest_route( 'wp/v2', '/search', array(
-				'methods'             => 'GET',
-				'callback'            => [ $this, 'rest_get_search' ],
-				'args'                => array(
-					'term' => array(
-						'default' => '',
-					)
 
-				),
-				'permission_callback' => function () {
-					return true;//current_user_can( 'activate_plugins' );
-				}
-			) );
+    }
 
-		} );
-	}
+    /**
+     * Handles the AJAX request for a specific title.
+     *
+     * @author Konstantin Obenland
+     * @since  2.0.0 - 29.12.2013
+     * @access public
+     *
+     * @return void
+     */
+    public function post_url() {
+        check_ajax_referer( 'wpss-post-url' );
 
-	public function rest_get_search( $request ) {
-		return $this->ajax_response( $request->get_param( 'term' ), 'return' );
-	}
+        global $wpdb;
+        $post = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s LIMIT 1", trim( sanitize_text_field( stripslashes( $_GET['title'] ) ) ) ) );
+
+        if ( $post ) {
+            echo get_permalink( $post );
+        }
+
+        wp_die();
+    }
+
+    public function rest_router() {
+        add_action( 'rest_api_init', function () {
+
+            register_rest_route( 'wp/v2', '/search', array(
+                'methods'             => 'GET',
+                'callback'            => [ $this, 'rest_get_search' ],
+                'args'                => array(
+                    'term' => array(
+                        'default' => '',
+                    )
+
+                ),
+                'permission_callback' => function () {
+                    return true;//current_user_can( 'activate_plugins' );
+                }
+            ) );
+
+        } );
+    }
+
+    public function rest_get_search( $request ) {
+        return $this->ajax_response( $request->get_param( 'term' ), 'return' );
+    }
 }  // End of class ProudSearch
 
 
