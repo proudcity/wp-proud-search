@@ -132,26 +132,55 @@ var decodeEntities = (function () {
         });
       });
 
+      /**
+       * Put keyboard focus in the search input, caret at the end of any
+       * existing term, and watch for the user tabbing back out.
+       */
+      function focusSearchInput() {
+        var $input = $('#proud-search-input');
+        if (!$input.length) {
+          return;
+        }
+        $input.focus();
+        // Put at end
+        setTimeout(function () {
+          $input[0].selectionStart = $input[0].selectionEnd = 10000;
+        }, 0);
+
+        // Watch for out of focus
+        $(document).off('focusout', '#wrapper-search', focusCheck);
+        $(document).on('focusout', '#wrapper-search', focusCheck);
+      }
+
       $body.on('proudNavClick', function (event) {
         switch (event['event']) {
           case 'search':
-            event.callback(true, false, false, false, function () {
-              if (
-                $body.hasClass('search-active') ||
-                $body.hasClass('search-active-lite')
-              ) {
-                var $input = $('#proud-search-input');
-                $input.focus();
-                // Put at end
-                setTimeout(function () {
-                  $input[0].selectionStart = $input[0].selectionEnd = 10000;
-                }, 0);
-
-                // Watch for out of focus
-                $(document).off('focusout', '#wrapper-search', focusCheck);
-                $(document).on('focusout', '#wrapper-search', focusCheck);
-              }
-            });
+            // proud_seach_print_search() only puts the search box in the
+            // navbar overlay when the page hasn't already rendered one in its
+            // content. Where the page has its own box the overlay markup is
+            // empty, so opening it slides in a blank panel. Scroll to the
+            // in-page box and focus that instead, mirroring the
+            // render_in_overlay branch in proud-actions-app.js.
+            if (
+              lodash.get(settings, 'proud_search_box.global.render_in_overlay')
+            ) {
+              event.callback(true, false, false, false, function () {
+                if (
+                  $body.hasClass('search-active') ||
+                  $body.hasClass('search-active-lite')
+                ) {
+                  focusSearchInput();
+                }
+              });
+            } else {
+              event.callback(
+                false,
+                'wrapper-search',
+                0,
+                ['menu', 'search'],
+                focusSearchInput
+              );
+            }
             break;
         }
       });

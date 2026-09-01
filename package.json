@@ -1,0 +1,9 @@
+{
+  "name": "wp-proud-search",
+  "private": true,
+  "description": "An elegant search interface",
+  "license": "GPL-2.0+",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\""
+  }
+}
