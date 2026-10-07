@@ -34,6 +34,7 @@ class FakeSet {
     this.classes = new Set(opts.classes || []);
     this.handlers = {};
     this.focusCount = 0;
+    this.blurCount = 0;
     // Element-like member so `$input[0].selectionStart = ...` doesn't throw.
     this[0] = { selectionStart: 0, selectionEnd: 0 };
   }
@@ -67,6 +68,11 @@ class FakeSet {
     return this;
   }
 
+  blur() {
+    this.blurCount += 1;
+    return this;
+  }
+
   find() {
     return new FakeSet('find', { length: 0 });
   }
@@ -92,6 +98,10 @@ class FakeSet {
 function load(options) {
   const opts = options || {};
   const bodyClasses = opts.bodyClasses || [];
+  const viewport = opts.viewport || {};
+  const pageYOffset = viewport.pageYOffset || 0;
+  const offsetTop = viewport.offsetTop || 0;
+  const noVisualViewport = viewport.noVisualViewport || false;
 
   const sets = new Map();
   const setFor = (selector) => {
@@ -115,6 +125,23 @@ function load(options) {
     proudNav: { triggerOverlay: () => {} },
   };
 
+  const scrollToCalls = [];
+
+  // Stand-in for window.visualViewport: iOS Safari fires 'resize' on this
+  // object when the keyboard pans the page, separately from window scroll.
+  const visualViewportHandlers = {};
+  const visualViewport = {
+    offsetTop,
+    addEventListener(event, handler) {
+      (visualViewportHandlers[event] = visualViewportHandlers[event] || []).push(
+        handler
+      );
+    },
+    emit(event) {
+      (visualViewportHandlers[event] || []).forEach((handler) => handler());
+    },
+  };
+
   const sandbox = {
     jQuery: $,
     Proud,
@@ -123,6 +150,9 @@ function load(options) {
     document: { createElement: () => ({ innerHTML: '', textContent: '' }) },
     window: {
       location: { protocol: 'https:', hostname: 'example.test', pathname: '/' },
+      pageYOffset: pageYOffset,
+      scrollTo: (...args) => scrollToCalls.push(args),
+      visualViewport: noVisualViewport ? undefined : visualViewport,
     },
     setTimeout,
     clearTimeout,
@@ -134,7 +164,7 @@ function load(options) {
     filename: SCRIPT_PATH,
   });
 
-  return { $, Proud, sets, setFor, sandbox };
+  return { $, Proud, sets, setFor, sandbox, scrollToCalls, visualViewport };
 }
 
 /**
@@ -143,9 +173,10 @@ function load(options) {
  *
  * @param {object} settings      Proud settings.
  * @param {string[]} bodyClasses Classes on <body>.
+ * @param {object} [viewport]    pageYOffset / offsetTop / noVisualViewport.
  */
-function runNavClick(settings, bodyClasses) {
-  const ctx = load({ settings, bodyClasses });
+function runNavClick(settings, bodyClasses, viewport) {
+  const ctx = load({ settings, bodyClasses, viewport });
   ctx.Proud.behaviors.proud_search.attach(ctx.sandbox.document, settings);
 
   const calls = [];
@@ -157,4 +188,30 @@ function runNavClick(settings, bodyClasses) {
   return { calls, ctx };
 }
 
-module.exports = { load, runNavClick, FakeSet };
+/**
+ * Run the in-content (hero) focus path: stub triggerOverlay so it emits
+ * proudNavClick the way proud-navbar's openLayer eventually does, then focus
+ * the hero search input the way a native tap does.
+ *
+ * @param {object} settings       Proud settings.
+ * @param {string[]} bodyClasses  Classes on <body>.
+ * @param {object} [viewport]     pageYOffset / offsetTop / noVisualViewport.
+ */
+function runContentFocus(settings, bodyClasses, viewport) {
+  const ctx = load({ settings, bodyClasses, viewport });
+  ctx.Proud.behaviors.proud_search.attach(ctx.sandbox.document, settings);
+
+  const calls = [];
+  ctx.Proud.proudNav.triggerOverlay = () => {
+    ctx.setFor('body').emit('proudNavClick', {
+      event: 'search',
+      callback: (...args) => calls.push(args),
+    });
+  };
+
+  ctx.setFor('#proud-search-input').emit('focus');
+
+  return { calls, ctx };
+}
+
+module.exports = { load, runNavClick, runContentFocus, FakeSet };

@@ -115,6 +115,24 @@ var decodeEntities = (function () {
         }
       }
 
+      // Set when the hero (in-content) box starts the open, so proudNavClick
+      // knows which path opened the overlay once its callback runs.
+      var openedFromContent = false;
+
+      // #2948: iOS Safari pans the *visual* viewport to keep a focused input
+      // above the keyboard, but `search-active #wrapper-search` is
+      // `position: fixed`, which tracks the *layout* viewport. After the pan
+      // (or after a prior page scroll) the fixed box sits above the visible
+      // area. Reset back to the origin so layout and visual viewport line up
+      // again.
+      function resetViewport(force) {
+        if (window.visualViewport && window.visualViewport.offsetTop > 0) {
+          window.scrollTo(0, 0);
+        } else if (force && window.pageYOffset > 0) {
+          window.scrollTo(0, 0);
+        }
+      }
+
       // Search box in content (not overlay)
       // Attach overlay open
       $('.wrap #wrapper-search').once('proud-search', function () {
@@ -123,6 +141,7 @@ var decodeEntities = (function () {
             !$body.hasClass('search-active') &&
             !$body.hasClass('search-active-lite')
           ) {
+            openedFromContent = true;
             Proud.proudNav.triggerOverlay('search', null, null);
 
             // Watch for out of focus
@@ -130,11 +149,32 @@ var decodeEntities = (function () {
             $(document).on('focusout', '#wrapper-search', focusCheck);
           }
         });
+
+        // The keyboard pan can land after proudNavClick's callback has
+        // already run (iOS keyboard animation is ~250-300ms), so also catch
+        // it directly. Gated on offsetTop, which is 0 on desktop, so desktop
+        // resizes never scroll.
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', function () {
+            if (
+              (
+                $body.hasClass('search-active') ||
+                $body.hasClass('search-active-lite')
+              ) &&
+              window.visualViewport.offsetTop > 0
+            ) {
+              window.scrollTo(0, 0);
+            }
+          });
+        }
       });
 
       $body.on('proudNavClick', function (event) {
         switch (event['event']) {
           case 'search':
+            var fromContent = openedFromContent;
+            openedFromContent = false;
+
             event.callback(true, false, false, false, function () {
               if (
                 $body.hasClass('search-active') ||
@@ -146,6 +186,12 @@ var decodeEntities = (function () {
                 setTimeout(function () {
                   $input[0].selectionStart = $input[0].selectionEnd = 10000;
                 }, 0);
+
+                // Force the reset on the in-content path only: the toolbar
+                // path shares this same callback, and an unconditional
+                // pageYOffset reset would jump a scrolled page to the top
+                // behind the overlay.
+                resetViewport(fromContent);
 
                 // Watch for out of focus
                 $(document).off('focusout', '#wrapper-search', focusCheck);
