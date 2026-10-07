@@ -142,20 +142,125 @@ function load(options) {
     },
   };
 
+  // Records the relative order of the #2948 keyboard-proxy steps against the
+  // proudNavClick callback, since the point of the proxy is to run before
+  // the 50ms openLayer timer that eventually invokes that callback.
+  const order = [];
+
+  // A throwaway <input> the script creates/focuses/removes for the keyboard
+  // proxy. setAttribute/style/focus/remove are recorded so tests can inspect
+  // them without a real DOM.
+  const createdInputs = [];
+  function makeFakeInput() {
+    const el = {
+      tagName: 'INPUT',
+      type: '',
+      attributes: {},
+      style: {},
+      focusCount: 0,
+      parentNode: null,
+      setAttribute(name, value) {
+        this.attributes[name] = value;
+      },
+      focus() {
+        this.focusCount += 1;
+        documentStub.activeElement = this;
+        order.push('proxyFocused');
+      },
+      remove() {
+        if (this.parentNode) {
+          this.parentNode.removeChild(this);
+        }
+      },
+    };
+    return el;
+  }
+
+  // Stand-in for document.body: just enough of appendChild/removeChild to
+  // track what the script attached and whether it cleaned up after itself.
+  const body = {
+    children: [],
+    appendChild(el) {
+      el.parentNode = body;
+      body.children.push(el);
+      return el;
+    },
+    removeChild(el) {
+      const index = body.children.indexOf(el);
+      if (index !== -1) {
+        body.children.splice(index, 1);
+      }
+      el.parentNode = null;
+      return el;
+    },
+  };
+
+  // Fakes setTimeout/clearTimeout so tests can fire the #2948 safety-removal
+  // timer on demand instead of waiting on a real one.
+  const timers = [];
+  function fakeSetTimeout(fn, delay) {
+    const timer = { fn, delay, fired: false, cleared: false };
+    timers.push(timer);
+    return timer;
+  }
+  function fakeClearTimeout(timer) {
+    if (timer) {
+      timer.cleared = true;
+    }
+  }
+  function runTimers() {
+    timers
+      .filter((timer) => !timer.fired && !timer.cleared)
+      .forEach((timer) => {
+        timer.fired = true;
+        if (!timer.cleared) {
+          timer.fn();
+        }
+      });
+  }
+
+  // The toolbar search trigger the safety timeout hands focus back to.
+  const searchTrigger = {
+    focusCount: 0,
+    focus() {
+      this.focusCount += 1;
+      documentStub.activeElement = this;
+    },
+  };
+
+  const documentStub = {
+    body,
+    activeElement: null,
+    querySelector(selector) {
+      return selector === '[data-proud-navbar="search"]' ? searchTrigger : null;
+    },
+    // Additive: decodeEntities still gets its plain div at script load, the
+    // #2948 proxy gets a recordable fake input.
+    createElement(tagName) {
+      if (tagName === 'input') {
+        const el = makeFakeInput();
+        createdInputs.push(el);
+        order.push('proxyCreated');
+        return el;
+      }
+      return { innerHTML: '', textContent: '' };
+    },
+  };
+
   const sandbox = {
     jQuery: $,
     Proud,
     lodash: require('./lodash-get.js'),
     angular: { module: () => {}, bootstrap: () => {} },
-    document: { createElement: () => ({ innerHTML: '', textContent: '' }) },
+    document: documentStub,
     window: {
       location: { protocol: 'https:', hostname: 'example.test', pathname: '/' },
       pageYOffset: pageYOffset,
       scrollTo: (...args) => scrollToCalls.push(args),
       visualViewport: noVisualViewport ? undefined : visualViewport,
     },
-    setTimeout,
-    clearTimeout,
+    setTimeout: fakeSetTimeout,
+    clearTimeout: fakeClearTimeout,
     console,
   };
   sandbox.window.document = sandbox.document;
@@ -164,7 +269,21 @@ function load(options) {
     filename: SCRIPT_PATH,
   });
 
-  return { $, Proud, sets, setFor, sandbox, scrollToCalls, visualViewport };
+  return {
+    $,
+    Proud,
+    sets,
+    setFor,
+    sandbox,
+    scrollToCalls,
+    visualViewport,
+    order,
+    createdInputs,
+    body,
+    timers,
+    runTimers,
+    searchTrigger,
+  };
 }
 
 /**
@@ -182,7 +301,10 @@ function runNavClick(settings, bodyClasses, viewport) {
   const calls = [];
   ctx.setFor('body').emit('proudNavClick', {
     event: 'search',
-    callback: (...args) => calls.push(args),
+    callback: (...args) => {
+      ctx.order.push('eventCallback');
+      calls.push(args);
+    },
   });
 
   return { calls, ctx };
@@ -205,7 +327,10 @@ function runContentFocus(settings, bodyClasses, viewport) {
   ctx.Proud.proudNav.triggerOverlay = () => {
     ctx.setFor('body').emit('proudNavClick', {
       event: 'search',
-      callback: (...args) => calls.push(args),
+      callback: (...args) => {
+        ctx.order.push('eventCallback');
+        calls.push(args);
+      },
     });
   };
 

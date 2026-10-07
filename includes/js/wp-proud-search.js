@@ -133,6 +133,67 @@ var decodeEntities = (function () {
         }
       }
 
+      // #2948: the toolbar path's $input.focus() below runs inside
+      // openLayer's 50ms class-add callback, which is outside the tap that
+      // triggered it, so iOS Safari gives the real input focus but no
+      // keyboard. Focus a throwaway proxy synchronously in the tap instead,
+      // pinned to the top so there's nothing to pan, then hand focus to the
+      // real input once the layer is open and remove the proxy.
+      var searchKeyboardProxy = null;
+
+      // Idempotent: both the normal open path and the safety timeout below
+      // can call this, and only the first should do anything.
+      function closeSearchKeyboardProxy() {
+        if (searchKeyboardProxy && searchKeyboardProxy.parentNode) {
+          searchKeyboardProxy.parentNode.removeChild(searchKeyboardProxy);
+        }
+        searchKeyboardProxy = null;
+      }
+
+      function openSearchKeyboardProxy() {
+        // A second tap inside the 50ms window would otherwise orphan the
+        // first proxy.
+        closeSearchKeyboardProxy();
+
+        var proxy = document.createElement('input');
+        proxy.type = 'text';
+        // Not aria-hidden: it holds focus briefly, and a focused hidden
+        // element confuses VoiceOver. A label keeps the announcement sensible.
+        proxy.setAttribute('aria-label', 'Search');
+        proxy.setAttribute('tabindex', '-1');
+        proxy.style.position = 'fixed';
+        proxy.style.top = '0';
+        proxy.style.left = '0';
+        proxy.style.opacity = '0';
+        proxy.style.fontSize = '16px'; // below 16px, iOS zooms on focus
+        proxy.style.width = '1px';
+        proxy.style.height = '1px';
+        proxy.style.pointerEvents = 'none';
+
+        document.body.appendChild(proxy);
+        proxy.focus();
+        searchKeyboardProxy = proxy;
+
+        // Safety net: if the open gets cancelled before the callback below
+        // ever sees the class, nothing else removes the proxy. Only touch
+        // this tap's proxy, so an earlier tap's timer can't remove a newer
+        // one, and hand focus back to the search button rather than letting
+        // it fall to body.
+        setTimeout(function () {
+          if (searchKeyboardProxy !== proxy) {
+            return;
+          }
+          var hadFocus = document.activeElement === proxy;
+          closeSearchKeyboardProxy();
+          if (hadFocus) {
+            var trigger = document.querySelector('[data-proud-navbar="search"]');
+            if (trigger) {
+              trigger.focus();
+            }
+          }
+        }, 1000);
+      }
+
       // Search box in content (not overlay)
       // Attach overlay open
       $('.wrap #wrapper-search').once('proud-search', function () {
@@ -175,6 +236,17 @@ var decodeEntities = (function () {
             var fromContent = openedFromContent;
             openedFromContent = false;
 
+            // #2948: only the toolbar path needs the proxy. The hero path
+            // already has native focus inside the gesture, and skip it when
+            // the overlay is already open (this click is closing it).
+            if (
+              !fromContent &&
+              !$body.hasClass('search-active') &&
+              !$body.hasClass('search-active-lite')
+            ) {
+              openSearchKeyboardProxy();
+            }
+
             event.callback(true, false, false, false, function () {
               if (
                 $body.hasClass('search-active') ||
@@ -182,6 +254,7 @@ var decodeEntities = (function () {
               ) {
                 var $input = $('#proud-search-input');
                 $input.focus();
+                closeSearchKeyboardProxy();
                 // Put at end
                 setTimeout(function () {
                   $input[0].selectionStart = $input[0].selectionEnd = 10000;
